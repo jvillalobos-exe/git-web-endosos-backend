@@ -1,0 +1,45 @@
+# ── Logs ──────────────────────────────────────────────────────────────────
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Build Output ──────────────────────────────────────────────────────────
+node_modules
+dist
+dist-ssr
+*.local
+
+# ── Editor ────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Env (NUNCA commitear) ─────────────────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Prisma ────────────────────────────────────────────────────────────────
+# El cliente generado no se commitea — se regenera en CI con `prisma generate`
+prisma/client/
+
+# ── NestJS ────────────────────────────────────────────────────────────────
+# Archivos de build y caché de Jest
+coverage/
+.jest-cache/
+
+# ── Docker ────────────────────────────────────────────────────────────────
+# Datos del contenedor PostgreSQL local
+docker/data/
