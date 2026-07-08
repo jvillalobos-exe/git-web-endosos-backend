@@ -117,12 +117,20 @@ const DEMO_PORTFOLIOS: PolicySnapshot[] = [
  */
 @Injectable()
 export class MockPolicyAdapter implements IPolicyPort {
+  private static readonly policyCache = new Map<string, PolicySnapshot>();
+
   async findByPolicyId(
     _tenantId: string,
     policyId: string,
   ): Promise<PolicySnapshot | null> {
     // Simulamos latencia de red (300ms) para hacer el demo más realista
     await this.simulateDelay(300);
+
+    // Buscar en caché primero (para pólizas externas)
+    const cached = MockPolicyAdapter.policyCache.get(policyId);
+    if (cached) {
+      return cached;
+    }
 
     const policy = DEMO_PORTFOLIOS.find((p) => p.policyId === policyId);
     return policy ?? null;
@@ -133,6 +141,140 @@ export class MockPolicyAdapter implements IPolicyPort {
     filters: PolicySearchFilters = {},
   ): Promise<PolicySnapshot[]> {
     await this.simulateDelay(500);
+
+    // Si se busca por cédula, consumir la API externa de La Mundial
+    if (filters.cedula) {
+      const cleanCedula = filters.cedula.trim().replace(/\./g, '');
+      try {
+        const response = await fetch('https://qaapisys2000.lamundialdeseguros.com/api/v1/poliza/searchPoliza', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            casegurado: cleanCedula,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`External API returned status ${response.status}`);
+        }
+
+        const json = await response.json() as any;
+        if (json && json.status && json.data && json.data.list) {
+          const mappedPolicies: PolicySnapshot[] = [];
+
+          for (const [key, item] of Object.entries(json.data.list)) {
+            const typedItem = item as any;
+
+            // Formatear fecha DD-MM-YYYY a YYYY-MM-DD
+            const parseDate = (dStr: string) => {
+              if (!dStr) return '';
+              const parts = dStr.split('-');
+              if (parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+              }
+              return dStr;
+            };
+
+            const startDate = parseDate(typedItem.Fecha_desde_Pol);
+            const endDate = parseDate(typedItem.Fecha_hasta_Pol);
+
+            // Calcular días restantes de vigencia
+            let daysRemaining = 0;
+            if (endDate) {
+              const end = new Date(endDate);
+              const now = new Date();
+              end.setHours(0, 0, 0, 0);
+              now.setHours(0, 0, 0, 0);
+              const diffTime = end.getTime() - now.getTime();
+              daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+            }
+
+            // Calcular días de deuda de recibos pendientes
+            let debtDays = 0;
+            if (typedItem.recibos && Array.isArray(typedItem.recibos)) {
+              const parseDDMMYYYY = (str: string): Date | null => {
+                if (!str) return null;
+                const parts = str.split('-');
+                if (parts.length === 3) {
+                  return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+                }
+                return null;
+              };
+
+              const pendingReceipts = typedItem.recibos.filter((r: any) => r.Status_Rec === 'Pendiente');
+              if (pendingReceipts.length > 0) {
+                const dates = pendingReceipts
+                  .map((r: any) => parseDDMMYYYY(r.Fdesde_Rec))
+                  .filter((d): d is Date => d !== null)
+                  .sort((a, b) => a.getTime() - b.getTime());
+
+                if (dates.length > 0 && dates[0].getTime() < Date.now()) {
+                  const diffTime = Date.now() - dates[0].getTime();
+                  debtDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                }
+              }
+            }
+
+            // Mapeo dinámico de ramo según descripción o código de ramo
+            let branchCode = 'vida';
+            let productId = 'vida-ind';
+            let productName = 'Vida Individual';
+
+            const descRamo = (typedItem.Descripcion_Ramo || '').toLowerCase();
+            if (typedItem.Codigo_Ramo === 6 || descRamo.includes('accidentes') || descRamo.includes('vida')) {
+              branchCode = 'vida';
+              productId = 'vida-ind';
+              productName = typedItem.Descripcion_Ramo || 'Vida Individual';
+            } else if (descRamo.includes('auto') || descRamo.includes('vehiculo') || descRamo.includes('casco')) {
+              branchCode = 'rcv';
+              productId = 'rcv-auto';
+              productName = typedItem.Descripcion_Ramo || 'RCV Automóvil';
+            } else if (descRamo.includes('funerario') || descRamo.includes('funeral')) {
+              branchCode = 'funerario';
+              productId = 'funerario-ind';
+              productName = typedItem.Descripcion_Ramo || 'Funerario Individual';
+            }
+
+            const status = typedItem.Estatus_Poliza === 'Vigente' ? 'active' : 'expired';
+
+            const snapshot: PolicySnapshot = {
+              policyId: key,
+              insuredName: typedItem.Nombre_Asegurado || typedItem.Nombre_del_Tomador || 'Asegurado Sin Nombre',
+              productId,
+              productName,
+              branchCode,
+              planCode: typedItem.Plan || 'basico',
+              planLabel: typedItem.Descripcion_Plan || 'Vida Básico (SA 20K)',
+              segmentCode: 'individual',
+              segmentLabel: 'Individual',
+              sumInsured: typedItem.CoberArys && typeof typedItem.CoberArys === 'number' && typedItem.CoberArys > 0 ? typedItem.CoberArys : 20000,
+              startDate,
+              endDate,
+              daysRemaining,
+              annualPremium: 240,
+              status,
+              debtDays,
+              openClaims: 0,
+              currency: typedItem.Moneda === 'DOLARES' ? 'USD' : 'USD',
+              insuredId: typedItem.CID || cleanCedula,
+              sucursal: typedItem.Sucursal || 'N/A',
+              intermediario: Array.isArray(typedItem.Intermediario) ? typedItem.Intermediario[1] : (typedItem.cproductor2 || 'N/A'),
+              tipoRenovacion: typedItem.Tipo_Renovacion || 'N/A',
+              recibos: typedItem.recibos || [],
+            };
+
+            MockPolicyAdapter.policyCache.set(snapshot.policyId, snapshot);
+            mappedPolicies.push(snapshot);
+          }
+          return mappedPolicies;
+        }
+      } catch (err) {
+        console.error('Error fetching policies from external API:', err);
+      }
+      return [];
+    }
 
     let results = [...DEMO_PORTFOLIOS];
 

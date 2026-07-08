@@ -62,17 +62,20 @@ La respuesta es un PolicySnapshot normalizado al formato del Motor.
   @ApiQuery({ name: 'insuredName', required: false, description: 'Filtrar por nombre del asegurado' })
   @ApiQuery({ name: 'branchCode', required: false, description: 'Filtrar por ramo (AUTO, VIDA, etc.)' })
   @ApiQuery({ name: 'status', required: false, enum: ['active', 'expired', 'suspended', 'cancelled'] })
+  @ApiQuery({ name: 'cedula', required: false, description: 'Filtrar por cédula del asegurado' })
   @ApiResponse({ status: 200, description: 'Lista de pólizas' })
   async findMany(
     @Req() req: Request & { tenantId: string },
     @Query('insuredName') insuredName?: string,
     @Query('branchCode') branchCode?: string,
     @Query('status') status?: string,
+    @Query('cedula') cedula?: string,
   ) {
     return this.queryPolicyUseCase.findMany(req.tenantId, {
       insuredName,
       branchCode,
       status: status as any,
+      cedula,
     });
   }
 }

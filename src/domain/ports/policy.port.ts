@@ -58,6 +58,16 @@ export interface PolicySnapshot {
   currency: string;
   /** Canal de origen de la póliza (opcional) */
   channel?: string;
+  /** Cédula/Identificación real del asegurado (opcional) */
+  insuredId?: string;
+  /** Sucursal de emisión (opcional) */
+  sucursal?: string;
+  /** Intermediario / Productor (opcional) */
+  intermediario?: string;
+  /** Tipo de renovación (opcional) */
+  tipoRenovacion?: string;
+  /** Listado de recibos de cobro asociados (opcional) */
+  recibos?: any[];
 }
 
 /**
@@ -107,6 +117,7 @@ export interface PolicySearchFilters {
   status?: PolicySnapshot['status'];
   page?: number;
   limit?: number;
+  cedula?: string;
 }
 
 /**
