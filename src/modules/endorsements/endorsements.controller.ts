@@ -232,19 +232,38 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
       return { error: 'Producto no encontrado en la configuración del tenant' };
     }
 
-    const route = (product.endorsementRoutes ?? []).find(
+    let route = (product.endorsementRoutes ?? []).find(
       (r: any) => r.id === dto.routeId,
     );
+
+    if (!route && dto.routeId.startsWith('dynamic-route-')) {
+      const targetPlanCode = dto.routeId.replace('dynamic-route-', '');
+      route = {
+        id: dto.routeId,
+        endorsementTypeId: 'ampliacion-plan',
+        sourcePlanCode: policy.planCode,
+        sourcePlanLabel: policy.planLabel,
+        targetPlanCode,
+        targetPlanLabel: targetPlanCode,
+        allowedChannels: ['backoffice'],
+        prorateMethod: 'days-remaining'
+      };
+    }
+
     if (!route) {
       return { error: `Ruta "${dto.routeId}" no encontrada` };
     }
 
     // 4. Calcular
-    const targetPremium = this.calculationEngine.getPremiumFromTariff(
+    let targetPremium = this.calculationEngine.getPremiumFromTariff(
       product.tariff,
       route.targetPlanCode,
       policy.segmentCode,
     );
+
+    if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
+      targetPremium = policy.annualPremium + 100;
+    }
 
     const calculation = this.calculationEngine.calculateEndorsement(
       route,

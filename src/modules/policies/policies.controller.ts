@@ -3,8 +3,8 @@
 // Expone el puerto IPolicyPort al frontend.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Controller, Get, Param, Query, UseGuards, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiHeader, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiHeader, ApiQuery, ApiBody } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { QueryPolicyUseCase } from '../../application/use-cases/query-policy.use-case';
@@ -77,5 +77,29 @@ La respuesta es un PolicySnapshot normalizado al formato del Motor.
       status: status as any,
       cedula,
     });
+  }
+
+  @Post('planes')
+  @ApiOperation({
+    summary: 'Consultar catálogo de planes de la API externa',
+    description: 'Consulta los planes disponibles en el Core de La Mundial de Seguros.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        centidad: { type: 'string', example: 'P' },
+        citem: { type: 'string', example: '205' },
+        cusuario: { type: 'number', example: 25221952 },
+        cramo: { type: 'number', example: 18 },
+        ctipo: { type: 'number', example: 1 },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Listado de planes del Core' })
+  async getPlanes(
+    @Body() body: any,
+  ) {
+    return this.queryPolicyUseCase.getPlanes(body);
   }
 }

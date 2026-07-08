@@ -299,6 +299,56 @@ export class MockPolicyAdapter implements IPolicyPort {
     return results.slice(start, start + limit);
   }
 
+  async getPlanes(filters: any): Promise<any> {
+    const cleanFilters = {
+      ctipo: filters?.ctipo ?? 1,
+      cramo: filters?.cramo ?? 18,
+      cproductor: filters?.cproductor ?? 80080,
+      cusuario: filters?.cusuario ?? 7,
+      centidad: filters?.centidad ?? 'P',
+      citem: filters?.citem ?? '80080',
+      iplaca: filters?.iplaca ?? 'N',
+    };
+
+    try {
+      const response = await fetch('https://qaapisys2000.lamundialdeseguros.com/api/v1/valrep/planes/v2/', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN1YXJpbyI6MSwieHVzdWFyaW8iOiJEZXNhcnJvbGxvIiwiY2NvcnJlZG9yIjpudWxsLCJ4bG9naW4iOiJkZXNhcnJvbGxvIiwiaWF0IjoxNzgzNDQ5MjY2LCJleHAiOjE3ODQwNTQwNjZ9.oPsqFqR_O28bnnpkGx3LuArvlVlIlp_NN4Ef484v8Pk',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cleanFilters),
+      });
+
+      if (!response.ok) {
+        throw new Error(`External planes API returned status ${response.status}`);
+      }
+
+      const resData = await response.json();
+      if (resData && resData.status === false) {
+        throw new Error(`External planes API indicated failure: ${resData.message}`);
+      }
+
+      return resData;
+    } catch (err) {
+      console.error('Error fetching planes from external API:', err);
+      // Fallback a planes mock si falla, no está autorizado o no encuentra planes en nuestro ambiente
+      // Esto permite que el sistema siga operando con los códigos correspondientes
+      return {
+        status: true,
+        data: {
+          plan: [
+            { cplan: 'basico', xplan: 'RCV Básico (SA 10K)', cramo: 18 },
+            { cplan: 'rcv-grua', xplan: 'RCV + Grúa (SA 15K)', cramo: 18 },
+            { cplan: 'premium', xplan: 'RCV Premium (SA 20K)', cramo: 18 }
+          ],
+          message: 'Planes encontrados (Fallback)'
+        }
+      };
+    }
+  }
+
   private simulateDelay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }

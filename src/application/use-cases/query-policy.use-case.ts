@@ -24,4 +24,8 @@ export class QueryPolicyUseCase {
   async findMany(tenantId: string, filters?: PolicySearchFilters): Promise<PolicySnapshot[]> {
     return this.policyPort.findMany(tenantId, filters);
   }
+
+  async getPlanes(filters: any): Promise<any> {
+    return this.policyPort.getPlanes(filters);
+  }
 }

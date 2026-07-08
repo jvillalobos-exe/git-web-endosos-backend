@@ -108,6 +108,12 @@ export interface IPolicyPort {
    * @param filters - Criterios de filtrado opcionales
    */
   findMany(tenantId: string, filters?: PolicySearchFilters): Promise<PolicySnapshot[]>;
+
+  /**
+   * Consulta el catálogo de planes disponibles en la API externa.
+   * @param filters - Parámetros de consulta
+   */
+  getPlanes(filters: any): Promise<any>;
 }
 
 export interface PolicySearchFilters {

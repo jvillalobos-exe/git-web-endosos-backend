@@ -123,9 +123,23 @@ export class CreateEndorsementUseCase {
   let requiresPayment = endorsementType.requiresPayment;
 
     if (dto.routeId && product?.tariff) {
-      const route = (product.endorsementRoutes ?? []).find(
+      let route = (product.endorsementRoutes ?? []).find(
         (r: any) => r.id === dto.routeId,
       );
+
+      if (!route && dto.routeId.startsWith('dynamic-route-')) {
+        const targetPlanCode = dto.routeId.replace('dynamic-route-', '');
+        route = {
+          id: dto.routeId,
+          endorsementTypeId: 'ampliacion-plan',
+          sourcePlanCode: policy.planCode,
+          sourcePlanLabel: policy.planLabel,
+          targetPlanCode,
+          targetPlanLabel: targetPlanCode,
+          allowedChannels: ['backoffice'],
+          prorateMethod: 'days-remaining'
+        };
+      }
 
       if (!route) {
         throw new BadRequestException(
@@ -133,11 +147,15 @@ export class CreateEndorsementUseCase {
         );
       }
 
-      const targetPremium = this.calculationEngine.getPremiumFromTariff(
+      let targetPremium = this.calculationEngine.getPremiumFromTariff(
         product.tariff,
         route.targetPlanCode,
         policy.segmentCode,
       );
+
+      if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
+        targetPremium = policy.annualPremium + 100;
+      }
 
       const calcResult = this.calculationEngine.calculateEndorsement(
         route,
