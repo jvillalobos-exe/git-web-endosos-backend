@@ -166,7 +166,7 @@ export class CalculationEngineService {
     }
 
     // ─── Cálculo de Impuestos ────────────────────────────────────────────
-    const taxes = route.taxRules.map((tax) => {
+    const taxes = (route.taxRules ?? []).map((tax) => {
       let base = 0;
       if (tax.appliesTo === 'difference') base = proratedAmount;
       else if (tax.appliesTo === 'full-premium') base = targetPremium;
@@ -199,6 +199,53 @@ export class CalculationEngineService {
       totalCharge,
       formula,
     };
+  }
+
+  /**
+   * Consulta el cotizador de autos externo para obtener la prima del plan destino.
+   * @param policy        - Snapshot de la póliza
+   * @param targetPlanCode - Código del plan destino
+   */
+  async getExternalAutoPremium(
+    policy: PolicySnapshot,
+    targetPlanCode: string,
+  ): Promise<number | null> {
+    const branch = (policy.branchCode || '').toLowerCase();
+    if (branch === 'rcv' || branch === 'auto') {
+      try {
+        const coreApiUrl = process.env.CORE_API_URL || 'https://qaapisys2000.lamundialdeseguros.com';
+        const response = await fetch(`${coreApiUrl}/api/v1/external/getCotizacionAuto`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cmarca: policy.cmarca ?? '083',
+            cmodelo: policy.cmodelo ?? '001',
+            cversion: policy.cversion ?? '01',
+            fano: policy.fano ?? 2004,
+            cplan: targetPlanCode,
+            ccategoria_uso: policy.ccategoria_uso ?? 11,
+            ntoneladas: policy.ntoneladas ?? 0,
+          }),
+        });
+
+        if (response.ok) {
+          const json = await response.json() as any;
+          if (json && json.status && json.result && json.result.mprimaext) {
+            const primaExt = parseFloat(json.result.mprimaext);
+            if (!isNaN(primaExt) && primaExt > 0) {
+              return primaExt;
+            }
+          }
+        }
+      } catch (err) {
+        this.logger.error(
+          `Error fetching external auto premium quote: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+    return null;
   }
 
   /**

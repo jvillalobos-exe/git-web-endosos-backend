@@ -15,6 +15,7 @@ import {
   IsArray,
   MaxLength,
   MinLength,
+  IsNumber,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -88,6 +89,11 @@ export class CreateEndorsementDto {
   @IsOptional()
   @IsObject()
   formData?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ description: 'Prima destino (si ya se cotizó previamente)', example: 120 })
+  @IsOptional()
+  @IsNumber()
+  targetPremium?: number;
 }
 
 /**
@@ -126,4 +132,9 @@ export class CalculateEndorsementDto {
   @ApiProperty({ description: 'Fecha efectiva del endoso', example: '2025-01-15' })
   @IsDateString()
   effectiveDate: string;
+
+  @ApiPropertyOptional({ description: 'Prima destino (si ya se cotizó previamente)', example: 120 })
+  @IsOptional()
+  @IsNumber()
+  targetPremium?: number;
 }

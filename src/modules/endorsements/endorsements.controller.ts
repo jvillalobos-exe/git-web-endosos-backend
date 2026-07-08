@@ -246,7 +246,8 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
         targetPlanCode,
         targetPlanLabel: targetPlanCode,
         allowedChannels: ['backoffice'],
-        prorateMethod: 'days-remaining'
+        prorateMethod: 'days-remaining',
+        taxRules: []
       };
     }
 
@@ -255,11 +256,23 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     }
 
     // 4. Calcular
-    let targetPremium = this.calculationEngine.getPremiumFromTariff(
-      product.tariff,
-      route.targetPlanCode,
-      policy.segmentCode,
-    );
+    let targetPremium = dto.targetPremium;
+
+    if (targetPremium === undefined || targetPremium === null) {
+      targetPremium = this.calculationEngine.getPremiumFromTariff(
+        product.tariff,
+        route.targetPlanCode,
+        policy.segmentCode,
+      );
+
+      const externalPremium = await this.calculationEngine.getExternalAutoPremium(
+        policy,
+        route.targetPlanCode,
+      );
+      if (externalPremium !== null) {
+        targetPremium = externalPremium;
+      }
+    }
 
     if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
       targetPremium = policy.annualPremium + 100;

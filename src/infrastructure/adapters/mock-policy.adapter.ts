@@ -39,6 +39,12 @@ const DEMO_PORTFOLIOS: PolicySnapshot[] = [
     openClaims: 0,
     currency: 'USD',
     channel: 'backoffice',
+    cmarca: '083',
+    cmodelo: '001',
+    cversion: '01',
+    fano: 2004,
+    ccategoria_uso: 11,
+    ntoneladas: 0,
   },
   {
     policyId: 'POL-002',
@@ -60,6 +66,12 @@ const DEMO_PORTFOLIOS: PolicySnapshot[] = [
     openClaims: 1,
     currency: 'USD',
     channel: 'agencia',
+    cmarca: '083',
+    cmodelo: '001',
+    cversion: '01',
+    fano: 2004,
+    ccategoria_uso: 11,
+    ntoneladas: 0,
   },
   {
     policyId: 'POL-003',
@@ -146,7 +158,8 @@ export class MockPolicyAdapter implements IPolicyPort {
     if (filters.cedula) {
       const cleanCedula = filters.cedula.trim().replace(/\./g, '');
       try {
-        const response = await fetch('https://qaapisys2000.lamundialdeseguros.com/api/v1/poliza/searchPoliza', {
+        const coreApiUrl = process.env.CORE_API_URL || 'https://qaapisys2000.lamundialdeseguros.com';
+        const response = await fetch(`${coreApiUrl}/api/v1/poliza/searchPoliza`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -253,7 +266,9 @@ export class MockPolicyAdapter implements IPolicyPort {
               startDate,
               endDate,
               daysRemaining,
-              annualPremium: 240,
+              annualPremium: (typedItem.recibos && Array.isArray(typedItem.recibos) && typedItem.recibos.length > 0)
+                ? typedItem.recibos.reduce((sum: number, r: any) => sum + (r.Monto_Rec_Ext || r.Monto_Rec || 0), 0)
+                : 240,
               status,
               debtDays,
               openClaims: 0,
@@ -263,6 +278,12 @@ export class MockPolicyAdapter implements IPolicyPort {
               intermediario: Array.isArray(typedItem.Intermediario) ? typedItem.Intermediario[1] : (typedItem.cproductor2 || 'N/A'),
               tipoRenovacion: typedItem.Tipo_Renovacion || 'N/A',
               recibos: typedItem.recibos || [],
+              cmarca: typedItem.cmarca || typedItem.Cmarca || undefined,
+              cmodelo: typedItem.cmodelo || typedItem.Cmodelo || undefined,
+              cversion: typedItem.cversion || typedItem.Cversion || undefined,
+              fano: typedItem.fano || typedItem.Fano || undefined,
+              ccategoria_uso: typedItem.ccategoria_uso || typedItem.Ccategoria_uso || undefined,
+              ntoneladas: typedItem.ntoneladas || typedItem.Ntoneladas || 0,
             };
 
             MockPolicyAdapter.policyCache.set(snapshot.policyId, snapshot);
@@ -311,7 +332,8 @@ export class MockPolicyAdapter implements IPolicyPort {
     };
 
     try {
-      const response = await fetch('https://qaapisys2000.lamundialdeseguros.com/api/v1/valrep/planes/v2/', {
+      const coreApiUrl = process.env.CORE_API_URL || 'https://qaapisys2000.lamundialdeseguros.com';
+      const response = await fetch(`${coreApiUrl}/api/v1/valrep/planes/v2/`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',

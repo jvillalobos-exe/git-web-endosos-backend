@@ -102,4 +102,58 @@ La respuesta es un PolicySnapshot normalizado al formato del Motor.
   ) {
     return this.queryPolicyUseCase.getPlanes(body);
   }
+
+  @Post('cotizacion')
+  @ApiOperation({
+    summary: 'Consultar cotización de auto del cotizador externo',
+    description: 'Consulta la cotización para el plan seleccionado basándose en los datos del vehículo de la póliza.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        policyId: { type: 'string', example: 'POL-001' },
+        cplan: { type: 'string', example: 'Auto I' },
+      },
+      required: ['policyId', 'cplan'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Resultado de la cotización' })
+  async getCotizacion(
+    @Body() body: { policyId: string; cplan: string },
+    @Req() req: Request & { tenantId: string },
+  ) {
+    const policy = await this.queryPolicyUseCase.findById(req.tenantId, body.policyId);
+    
+    try {
+      const coreApiUrl = process.env.CORE_API_URL || 'https://qaapisys2000.lamundialdeseguros.com';
+      const response = await fetch(`${coreApiUrl}/api/v1/external/getCotizacionAuto`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cmarca: policy.cmarca ?? '083',
+          cmodelo: policy.cmodelo ?? '001',
+          cversion: policy.cversion ?? '01',
+          fano: policy.fano ?? 2004,
+          cplan: body.cplan,
+          ccategoria_uso: policy.ccategoria_uso ?? 11,
+          ntoneladas: policy.ntoneladas ?? 0,
+        }),
+      });
+
+      if (response.ok) {
+        const json = await response.json() as any;
+        return json;
+      }
+      
+      return { status: false, message: `Cotizador externo retornó status ${response.status}` };
+    } catch (err) {
+      return {
+        status: false,
+        message: `Error conectando con el cotizador externo: ${err instanceof Error ? err.message : String(err)}`
+      };
+    }
+  }
 }

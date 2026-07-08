@@ -137,7 +137,8 @@ export class CreateEndorsementUseCase {
           targetPlanCode,
           targetPlanLabel: targetPlanCode,
           allowedChannels: ['backoffice'],
-          prorateMethod: 'days-remaining'
+          prorateMethod: 'days-remaining',
+          taxRules: []
         };
       }
 
@@ -147,11 +148,23 @@ export class CreateEndorsementUseCase {
         );
       }
 
-      let targetPremium = this.calculationEngine.getPremiumFromTariff(
-        product.tariff,
-        route.targetPlanCode,
-        policy.segmentCode,
-      );
+      let targetPremium = dto.targetPremium;
+
+      if (targetPremium === undefined || targetPremium === null) {
+        targetPremium = this.calculationEngine.getPremiumFromTariff(
+          product.tariff,
+          route.targetPlanCode,
+          policy.segmentCode,
+        );
+
+        const externalPremium = await this.calculationEngine.getExternalAutoPremium(
+          policy,
+          route.targetPlanCode,
+        );
+        if (externalPremium !== null) {
+          targetPremium = externalPremium;
+        }
+      }
 
       if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
         targetPremium = policy.annualPremium + 100;
