@@ -63,7 +63,7 @@ export class EndorsementsController {
     private readonly endorsementRepo: IEndorsementRepository,
     private readonly tenantConfigRepo: TenantConfigRepository,
     private readonly calculationEngine: CalculationEngineService,
-  ) {}
+  ) { }
 
   // ─── POST /endorsements ──────────────────────────────────────────────────
 
@@ -246,8 +246,7 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
         targetPlanCode,
         targetPlanLabel: targetPlanCode,
         allowedChannels: ['backoffice'],
-        prorateMethod: 'days-remaining',
-        taxRules: []
+        prorateMethod: 'days-remaining'
       };
     }
 
@@ -256,23 +255,11 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     }
 
     // 4. Calcular
-    let targetPremium = dto.targetPremium;
-
-    if (targetPremium === undefined || targetPremium === null) {
-      targetPremium = this.calculationEngine.getPremiumFromTariff(
-        product.tariff,
-        route.targetPlanCode,
-        policy.segmentCode,
-      );
-
-      const externalPremium = await this.calculationEngine.getExternalAutoPremium(
-        policy,
-        route.targetPlanCode,
-      );
-      if (externalPremium !== null) {
-        targetPremium = externalPremium;
-      }
-    }
+    let targetPremium = this.calculationEngine.getPremiumFromTariff(
+      product.tariff,
+      route.targetPlanCode,
+      policy.segmentCode,
+    );
 
     if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
       targetPremium = policy.annualPremium + 100;

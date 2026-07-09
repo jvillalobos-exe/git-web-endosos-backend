@@ -49,7 +49,7 @@ export class CreateEndorsementUseCase {
     private readonly ruleEngine: RuleEngineService,
     private readonly calculationEngine: CalculationEngineService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async execute(tenantId: string, dto: CreateEndorsementDto): Promise<Endorsement> {
     this.logger.log(`Creating endorsement for tenant=${tenantId}, policy=${dto.policyId}`);
@@ -119,8 +119,8 @@ export class CreateEndorsementUseCase {
       .map((r) => r.ruleId);
 
     // ─── 4. Calcular costo (para endosos cuantitativos con ruta) ─────────
-  let calculation: EndorsementCalculation | undefined;
-  let requiresPayment = endorsementType.requiresPayment;
+    let calculation: EndorsementCalculation | undefined;
+    let requiresPayment = endorsementType.requiresPayment;
 
     if (dto.routeId && product?.tariff) {
       let route = (product.endorsementRoutes ?? []).find(
@@ -137,8 +137,7 @@ export class CreateEndorsementUseCase {
           targetPlanCode,
           targetPlanLabel: targetPlanCode,
           allowedChannels: ['backoffice'],
-          prorateMethod: 'days-remaining',
-          taxRules: []
+          prorateMethod: 'days-remaining'
         };
       }
 
@@ -148,23 +147,11 @@ export class CreateEndorsementUseCase {
         );
       }
 
-      let targetPremium = dto.targetPremium;
-
-      if (targetPremium === undefined || targetPremium === null) {
-        targetPremium = this.calculationEngine.getPremiumFromTariff(
-          product.tariff,
-          route.targetPlanCode,
-          policy.segmentCode,
-        );
-
-        const externalPremium = await this.calculationEngine.getExternalAutoPremium(
-          policy,
-          route.targetPlanCode,
-        );
-        if (externalPremium !== null) {
-          targetPremium = externalPremium;
-        }
-      }
+      let targetPremium = this.calculationEngine.getPremiumFromTariff(
+        product.tariff,
+        route.targetPlanCode,
+        policy.segmentCode,
+      );
 
       if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
         targetPremium = policy.annualPremium + 100;
@@ -262,10 +249,77 @@ export class CreateEndorsementUseCase {
       return saved;
     });
 
+    // ─── 6. Integración con el Core (fuera de la transacción de base de datos) ───
+    const isReadyForCore =
+      endorsement.status === EndorsementStatus.EMITTED ||
+      endorsement.status === EndorsementStatus.PENDING_PAYMENT;
+
+    if (isReadyForCore && calculation && dto.routeId) {
+      try {
+        await this.processCoreIntegration(policy, calculation, dto.effectiveDate);
+      } catch (err) {
+        this.logger.error(`Error during Core integration: ${err.message}`);
+        throw err;
+      }
+    }
+
     this.logger.log(
       `Endorsement created: id=${endorsement.id}, status=${endorsement.status}`
     );
 
     return endorsement;
+  }
+
+  private async processCoreIntegration(
+    policy: any,
+    calculation: any,
+    effectiveDate: string,
+  ): Promise<void> {
+    const pendingReceipts = (policy.recibos ?? [])
+      .filter((r: any) => r.Status_Rec === 'Pendiente')
+      .map((r: any) => r.cnrecibo?.trim() || r.crecibo?.toString());
+
+    const CORE_API_BASE_URL =
+      process.env.CORE_API_URL ?? 'https://qaapisys2000.lamundialdeseguros.com';
+
+    // 1. Anular recibos pendientes si existen
+    if (pendingReceipts.length > 0) {
+      this.logger.log(`Voiding pending receipts in Core: ${pendingReceipts.join(', ')}`);
+      const anularRes = await fetch(`${CORE_API_BASE_URL}/api/v1/changes/anularRecibos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cnpoliza: policy.policyId,
+          recibos: pendingReceipts,
+          fanulacion: effectiveDate,
+          cusuario: 7,
+        }),
+      });
+
+      if (!anularRes.ok) {
+        const errText = await anularRes.text();
+        throw new BadRequestException(`Fallo al anular recibos en el Core: ${errText}`);
+      }
+    }
+
+    // 2. Crear el nuevo recibo con la prima calculada
+    this.logger.log(`Creating new receipt in Core for premium: ${calculation.targetPremium}`);
+    const crearRes = await fetch(`${CORE_API_BASE_URL}/api/v1/endoso-recibos/crearRecibo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cnpoliza: policy.policyId,
+        mprima: calculation.targetPremium,
+        fdesde: effectiveDate,
+        fhasta: policy.endDate,
+        cusuario: 7,
+        cplan: calculation.targetPlan,
+      }),
+    });
+
+    if (!crearRes.ok) {
+      const errText = await crearRes.text();
+      throw new BadRequestException(`Fallo al crear el recibo en el Core: ${errText}`);
+    }
   }
 }

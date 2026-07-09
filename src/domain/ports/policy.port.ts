@@ -68,12 +68,6 @@ export interface PolicySnapshot {
   tipoRenovacion?: string;
   /** Listado de recibos de cobro asociados (opcional) */
   recibos?: any[];
-  cmarca?: string;
-  cmodelo?: string;
-  cversion?: string;
-  fano?: number;
-  ccategoria_uso?: number;
-  ntoneladas?: number;
 }
 
 /**
