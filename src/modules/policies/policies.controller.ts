@@ -18,7 +18,7 @@ import { QueryPolicyUseCase } from '../../application/use-cases/query-policy.use
 @UseGuards(TenantGuard)
 @Controller('policies')
 export class PoliciesController {
-  constructor(private readonly queryPolicyUseCase: QueryPolicyUseCase) {}
+  constructor(private readonly queryPolicyUseCase: QueryPolicyUseCase) { }
 
   @Get(':policyId')
   @ApiOperation({

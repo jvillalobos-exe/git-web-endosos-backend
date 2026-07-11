@@ -63,7 +63,7 @@ export class EndorsementsController {
     private readonly endorsementRepo: IEndorsementRepository,
     private readonly tenantConfigRepo: TenantConfigRepository,
     private readonly calculationEngine: CalculationEngineService,
-  ) {}
+  ) { }
 
   // ─── POST /endorsements ──────────────────────────────────────────────────
 

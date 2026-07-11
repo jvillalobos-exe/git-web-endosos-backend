@@ -166,7 +166,7 @@ export class CalculationEngineService {
     }
 
     // ─── Cálculo de Impuestos ────────────────────────────────────────────
-    const taxes = (route.taxRules || []).map((tax) => {
+    const taxes = (route.taxRules ?? []).map((tax) => {
       let base = 0;
       if (tax.appliesTo === 'difference') base = proratedAmount;
       else if (tax.appliesTo === 'full-premium') base = targetPremium;

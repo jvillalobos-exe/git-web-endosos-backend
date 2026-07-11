@@ -193,7 +193,7 @@ export class MockPolicyAdapter implements IPolicyPort {
 
             // Calcular días de deuda de recibos pendientes
             let debtDays = 0;
-            if (typedItem.recibos && Array.isArray(typedItem.recibos)) {
+            if (typedItem.recibos && Array.isArray(typedItem.recibos) && typedItem.recibos.length > 1) {
               const parseDDMMYYYY = (str: string): Date | null => {
                 if (!str) return null;
                 const parts = str.split('-');
