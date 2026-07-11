@@ -246,7 +246,8 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
         targetPlanCode,
         targetPlanLabel: targetPlanCode,
         allowedChannels: ['backoffice'],
-        prorateMethod: 'days-remaining'
+        prorateMethod: 'days-remaining',
+        taxRules: [],
       };
     }
 
