@@ -280,7 +280,10 @@ export class CreateEndorsementUseCase {
       .map((r: any) => r.cnrecibo?.trim() || r.crecibo?.toString());
 
     const CORE_API_BASE_URL =
-      process.env.CORE_API_URL ?? 'https://qaapisys2000.lamundialdeseguros.com';
+      process.env.CORE_API_URL ??
+      (process.env.NODE_ENV === 'development'
+        ? 'http://localhost:5254'
+        : 'https://qaapisys2000.lamundialdeseguros.com');
 
     // 1. Anular recibos pendientes si existen
     if (pendingReceipts.length > 0) {
@@ -289,7 +292,7 @@ export class CreateEndorsementUseCase {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cnpoliza: policy.policyId,
+          cnpoliza: (policy as any).cnpoliza || policy.policyId,
           recibos: pendingReceipts,
           fanulacion: effectiveDate,
           cusuario: 7,
@@ -302,13 +305,25 @@ export class CreateEndorsementUseCase {
       }
     }
 
+    let fanopoliza = (policy as any).fanopoliza;
+    let fmespoliza = (policy as any).fmespoliza;
+    if ((!fanopoliza || !fmespoliza) && policy.policyId.includes('-')) {
+      const parts = policy.policyId.split('-');
+      if (parts.length === 3) {
+        fanopoliza = parseInt(parts[1], 10);
+        fmespoliza = parseInt(parts[2], 10);
+      }
+    }
+
     // 2. Crear el nuevo recibo con la prima calculada
     this.logger.log(`Creating new receipt in Core for premium: ${calculation.targetPremium}`);
     const crearRes = await fetch(`${CORE_API_BASE_URL}/api/v1/endoso-recibos/crearRecibo`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        cnpoliza: policy.policyId,
+        cnpoliza: (policy as any).cnpoliza || policy.policyId,
+        fanopoliza,
+        fmespoliza,
         mprima: calculation.targetPremium,
         fdesde: effectiveDate,
         fhasta: policy.endDate,

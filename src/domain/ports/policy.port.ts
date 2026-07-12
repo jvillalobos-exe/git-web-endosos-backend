@@ -68,6 +68,12 @@ export interface PolicySnapshot {
   tipoRenovacion?: string;
   /** Listado de recibos de cobro asociados (opcional) */
   recibos?: any[];
+  /** Número de póliza en la tabla adpoliza del Core (opcional) */
+  cnpoliza?: string;
+  /** Año de la póliza (fanopol) (opcional) */
+  fanopoliza?: number;
+  /** Mes de la póliza (fmespol) (opcional) */
+  fmespoliza?: number;
 }
 
 /**

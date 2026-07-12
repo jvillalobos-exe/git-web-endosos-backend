@@ -135,3 +135,14 @@ enum EndorsementStatus {
 
   @@map("endorsement_status")
 }
+
+// ─── CACHE DE POLIZAS ──────────────────────────────────────────────────────────
+// Almacena temporalmente los datos de las pólizas consultadas al Core externo.
+model PolicyCache {
+  policyId  String   @id @map("policy_id") @db.VarChar(100)
+  data      Json     @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("policy_cache")
+}

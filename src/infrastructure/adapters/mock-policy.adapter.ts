@@ -12,7 +12,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../infrastructure/database/prisma.service';
 import type { IPolicyPort, PolicySnapshot, PolicySearchFilters } from '../../domain/ports/policy.port';
+}
 
 /**
  * Portfolio de pólizas demo para la aseguradora "La Mundial de Seguros".
@@ -21,6 +23,9 @@ import type { IPolicyPort, PolicySnapshot, PolicySearchFilters } from '../../dom
 const DEMO_PORTFOLIOS: PolicySnapshot[] = [
   {
     policyId: 'POL-001',
+    cnpoliza: 'POL-001',
+    fanopoliza: 2024,
+    fmespoliza: 1,
     insuredName: 'María García Rodríguez',
     productId: 'rcv-basic',
     productName: 'RCV Básico',
@@ -42,6 +47,9 @@ const DEMO_PORTFOLIOS: PolicySnapshot[] = [
   },
   {
     policyId: 'POL-002',
+    cnpoliza: 'POL-002',
+    fanopoliza: 2024,
+    fmespoliza: 3,
     insuredName: 'Carlos Mendoza Pérez',
     productId: 'rcv-basic',
     productName: 'RCV Básico',
@@ -63,6 +71,9 @@ const DEMO_PORTFOLIOS: PolicySnapshot[] = [
   },
   {
     policyId: 'POL-003',
+    cnpoliza: 'POL-003',
+    fanopoliza: 2024,
+    fmespoliza: 2,
     insuredName: 'Ana Lucía Torres',
     productId: 'funerario-plan',
     productName: 'Plan Funerario Integral',
@@ -84,6 +95,9 @@ const DEMO_PORTFOLIOS: PolicySnapshot[] = [
   },
   {
     policyId: 'POL-004',
+    cnpoliza: 'POL-004',
+    fanopoliza: 2023,
+    fmespoliza: 6,
     insuredName: 'Roberto Jiménez Silva',
     productId: 'vida-individual',
     productName: 'Vida Individual',
@@ -117,7 +131,7 @@ const DEMO_PORTFOLIOS: PolicySnapshot[] = [
  */
 @Injectable()
 export class MockPolicyAdapter implements IPolicyPort {
-  private static readonly policyCache = new Map<string, PolicySnapshot>();
+  constructor(private readonly prisma: PrismaService) {}
 
   async findByPolicyId(
     _tenantId: string,
@@ -126,10 +140,17 @@ export class MockPolicyAdapter implements IPolicyPort {
     // Simulamos latencia de red (300ms) para hacer el demo más realista
     await this.simulateDelay(300);
 
-    // Buscar en caché primero (para pólizas externas)
-    const cached = MockPolicyAdapter.policyCache.get(policyId);
-    if (cached) {
-      return cached;
+    // Buscar en caché persistente en base de datos PostgreSQL
+    try {
+      const rows = await this.prisma.$queryRawUnsafe<any[]>(
+        `SELECT data FROM policy_cache WHERE policy_id = $1`,
+        policyId
+      );
+      if (rows && rows.length > 0) {
+        return rows[0].data as PolicySnapshot;
+      }
+    } catch (err) {
+      console.error('Error querying policy_cache from database:', err);
     }
 
     const policy = DEMO_PORTFOLIOS.find((p) => p.policyId === policyId);
@@ -241,6 +262,9 @@ export class MockPolicyAdapter implements IPolicyPort {
 
             const snapshot: PolicySnapshot = {
               policyId: key,
+              cnpoliza: typedItem.Nro_Poliza || typedItem.cnpoliza || typedItem.Cnpoliza || (key.includes('-') ? key.split('-')[0] : key),
+              fanopoliza: typedItem.fanopol || (key.includes('-') ? parseInt(key.split('-')[1], 10) : new Date().getFullYear()),
+              fmespoliza: typedItem.fmespol || (key.includes('-') ? parseInt(key.split('-')[2], 10) : new Date().getMonth() + 1),
               insuredName: typedItem.Nombre_Asegurado || typedItem.Nombre_del_Tomador || 'Asegurado Sin Nombre',
               productId,
               productName,
@@ -265,7 +289,19 @@ export class MockPolicyAdapter implements IPolicyPort {
               recibos: typedItem.recibos || [],
             };
 
-            MockPolicyAdapter.policyCache.set(snapshot.policyId, snapshot);
+            // Almacenar en caché persistente en base de datos PostgreSQL
+            try {
+              await this.prisma.$executeRawUnsafe(
+                `INSERT INTO policy_cache (policy_id, data, created_at, updated_at) 
+                 VALUES ($1, $2, NOW(), NOW()) 
+                 ON CONFLICT (policy_id) 
+                 DO UPDATE SET data = $2, updated_at = NOW()`,
+                snapshot.policyId,
+                snapshot
+              );
+            } catch (err) {
+              console.error('Error saving to policy_cache database:', err);
+            }
             mappedPolicies.push(snapshot);
           }
           return mappedPolicies;
