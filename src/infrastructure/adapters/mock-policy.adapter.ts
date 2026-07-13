@@ -14,7 +14,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import type { IPolicyPort, PolicySnapshot, PolicySearchFilters } from '../../domain/ports/policy.port';
-}
 
 /**
  * Portfolio de pólizas demo para la aseguradora "La Mundial de Seguros".
@@ -265,27 +264,29 @@ export class MockPolicyAdapter implements IPolicyPort {
               cnpoliza: typedItem.Nro_Poliza || typedItem.cnpoliza || typedItem.Cnpoliza || (key.includes('-') ? key.split('-')[0] : key),
               fanopoliza: typedItem.fanopol || (key.includes('-') ? parseInt(key.split('-')[1], 10) : new Date().getFullYear()),
               fmespoliza: typedItem.fmespol || (key.includes('-') ? parseInt(key.split('-')[2], 10) : new Date().getMonth() + 1),
-              insuredName: typedItem.Nombre_Asegurado || typedItem.Nombre_del_Tomador || 'Asegurado Sin Nombre',
+              insuredName: typedItem.Nombre_Asegurado || typedItem.Nombre_del_Tomador || '',
               productId,
               productName,
               branchCode,
-              planCode: typedItem.Plan || 'basico',
-              planLabel: typedItem.Descripcion_Plan || 'Vida Básico (SA 20K)',
-              segmentCode: 'individual',
-              segmentLabel: 'Individual',
-              sumInsured: typedItem.CoberArys && typeof typedItem.CoberArys === 'number' && typedItem.CoberArys > 0 ? typedItem.CoberArys : 20000,
+              planCode: typedItem.Plan || '',
+              planLabel: typedItem.Descripcion_Plan || typedItem.Plan || '',
+              segmentCode: typedItem.Segmento || (branchCode === 'rcv' ? 'particular' : 'individual'),
+              segmentLabel: typedItem.Descripcion_Segmento || (branchCode === 'rcv' ? 'Particular' : 'Individual'),
+              sumInsured: typedItem.CoberArys || typedItem.Suma_Asegurada || 0,
               startDate,
               endDate,
               daysRemaining,
-              annualPremium: 240,
+              annualPremium: typedItem.recibos && Array.isArray(typedItem.recibos) && typedItem.recibos.length > 0
+                ? typedItem.recibos.reduce((sum: number, r: any) => sum + (parseFloat(r.Monto_Rec_Ext || r.Monto_Rec) || 0), 0)
+                : 0,
               status,
               debtDays,
-              openClaims: 0,
-              currency: typedItem.Moneda === 'DOLARES' ? 'USD' : 'USD',
+              openClaims: typedItem.Siniestros || 0,
+              currency: typedItem.Moneda === 'BOLIVARES' || typedItem.Moneda === 'Bs' ? 'VES' : (typedItem.Moneda === 'EURO' || typedItem.Moneda === 'EUR' ? 'EUR' : 'USD'),
               insuredId: typedItem.CID || cleanCedula,
-              sucursal: typedItem.Sucursal || 'N/A',
-              intermediario: Array.isArray(typedItem.Intermediario) ? typedItem.Intermediario[1] : (typedItem.cproductor2 || 'N/A'),
-              tipoRenovacion: typedItem.Tipo_Renovacion || 'N/A',
+              sucursal: typedItem.Sucursal || '',
+              intermediario: Array.isArray(typedItem.Intermediario) ? typedItem.Intermediario[1] : (typedItem.cproductor2 || ''),
+              tipoRenovacion: typedItem.Tipo_Renovacion || '',
               recibos: typedItem.recibos || [],
             };
 
@@ -312,7 +313,21 @@ export class MockPolicyAdapter implements IPolicyPort {
       return [];
     }
 
-    let results = [...DEMO_PORTFOLIOS];
+    let results: PolicySnapshot[] = [];
+    try {
+      const rows = await this.prisma.$queryRawUnsafe<any[]>(
+        `SELECT data FROM policy_cache ORDER BY updated_at DESC`
+      );
+      if (rows && rows.length > 0) {
+        results = rows.map((r) => r.data as PolicySnapshot);
+      }
+    } catch (err) {
+      console.error('Error fetching all policies from cache:', err);
+    }
+
+    if (results.length === 0) {
+      results = [...DEMO_PORTFOLIOS];
+    }
 
     if (filters.insuredName) {
       const term = filters.insuredName.toLowerCase();
@@ -327,6 +342,13 @@ export class MockPolicyAdapter implements IPolicyPort {
 
     if (filters.status) {
       results = results.filter((p) => p.status === filters.status);
+    }
+
+    if (filters.planCode) {
+      const targetCode = filters.planCode.toLowerCase().trim();
+      results = results.filter(
+        (p) => p.planCode && p.planCode.toLowerCase().trim() === targetCode,
+      );
     }
 
     const page = filters.page ?? 1;

@@ -16,6 +16,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -141,6 +142,17 @@ Flujo completo de emisión de endoso:
     });
   }
 
+  // ─── GET /endorsements/dashboard/stats ───────────────────────────────────
+
+  @Get('dashboard/stats')
+  @ApiOperation({ summary: 'Obtener estadísticas agregadas para el dashboard' })
+  @ApiResponse({ status: 200, description: 'Estadísticas agregadas' })
+  async getDashboardStats(
+    @Req() req: Request & { tenantId: string },
+  ) {
+    return this.endorsementRepo.getDashboardStats(req.tenantId);
+  }
+
   // ─── GET /endorsements/:id ───────────────────────────────────────────────
 
   @Get(':id')
@@ -262,8 +274,10 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
       policy.segmentCode,
     );
 
-    if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
-      targetPremium = policy.annualPremium + 100;
+    if (targetPremium === 0) {
+      throw new BadRequestException(
+        `No existe configuración de tarifa para el plan "${route.targetPlanCode}" y segmento "${policy.segmentCode}"`
+      );
     }
 
     const calculation = this.calculationEngine.calculateEndorsement(

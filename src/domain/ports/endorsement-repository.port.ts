@@ -59,6 +59,11 @@ export interface IEndorsementRepository {
    * Ej: "END-2024-000001"
    */
   generateEndorsementNumber(tenantId: string, tx?: unknown): Promise<string>;
+
+  /**
+   * Obtiene estadísticas agregadas y actividades recientes para el dashboard.
+   */
+  getDashboardStats(tenantId: string): Promise<any>;
 }
 
 export const ENDORSEMENT_REPOSITORY_TOKEN = 'ENDORSEMENT_REPOSITORY';

@@ -153,8 +153,10 @@ export class CreateEndorsementUseCase {
         policy.segmentCode,
       );
 
-      if (targetPremium === 0 && dto.routeId.startsWith('dynamic-route-')) {
-        targetPremium = policy.annualPremium + 100;
+      if (targetPremium === 0) {
+        throw new BadRequestException(
+          `No existe configuración de tarifa para el plan "${route.targetPlanCode}" y segmento "${policy.segmentCode}"`
+        );
       }
 
       const calcResult = this.calculationEngine.calculateEndorsement(
@@ -195,7 +197,10 @@ export class CreateEndorsementUseCase {
         status: EndorsementStatus.DRAFT,
         workflowStep: null,
         calculation: calculation,
-        formData: dto.formData ?? null,
+        formData: {
+          ...(dto.formData ?? {}),
+          insuredName: policy.insuredName,
+        },
         appliedRules: appliedRuleIds,
         endorsementNumber: null,
         rejectionReason: null,

@@ -121,6 +121,140 @@ export class EndorsementRepository implements IEndorsementRepository {
     return `END-${year}-${sequence}`;
   }
 
+  async getDashboardStats(tenantId: string): Promise<any> {
+    const endorsements = await this.prisma.endorsement.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 1. Calcular agregados mezclando con valores base para demo premium
+    let dbEmittedPremium = 0;
+    let dbEmittedCount = 0;
+    let dbRejectedCount = 0;
+    let dbPendingApprovalCount = 0;
+    let dbTotalCount = endorsements.length;
+
+    let rcvCount = 0;
+    let cascoCount = 0;
+
+    let backofficeCount = 0;
+    let portalCount = 0;
+    let whatsappCount = 0;
+    let apiCount = 0;
+
+    const recentActivity: any[] = [];
+
+    for (const end of endorsements) {
+      const calc = end.calculation as any;
+      const amount = calc?.totalCharge || 0;
+
+      if (end.status === 'EMITTED') {
+        dbEmittedPremium += amount;
+        dbEmittedCount++;
+      } else if (end.status === 'REJECTED') {
+        dbRejectedCount++;
+      } else if (end.status === 'PENDING_APPROVAL' || end.status === 'PENDING_PAYMENT') {
+        dbPendingApprovalCount++;
+      }
+
+      // Ramos: RCV vs Casco
+      const routeId = end.routeId || '';
+      if (routeId.toLowerCase().includes('casco')) {
+        cascoCount++;
+      } else {
+        rcvCount++; // RCV por defecto
+      }
+
+      // Canales
+      const channelId = end.channelId || '';
+      if (channelId === 'backoffice') backofficeCount++;
+      else if (channelId === 'portal') portalCount++;
+      else if (channelId === 'whatsapp') whatsappCount++;
+      else if (channelId === 'api') apiCount++;
+
+      // Mapear actividad reciente
+      const formData = end.formData as any;
+      const insuredName = formData?.insuredName || 'Cliente Asegurado';
+      
+      let typeLabel = 'Modificación de Póliza';
+      if (end.endorsementTypeId === 'ampliacion-plan') typeLabel = 'Ampliación Plan';
+      else if (end.endorsementTypeId === 'inclusion-cobertura') typeLabel = 'Inclusión Cobertura';
+      else if (end.endorsementTypeId === 'aumento-suma') typeLabel = 'Aumento Suma Asegurada';
+
+      let statusLabel: 'approved' | 'blocked' | 'requires-approval' = 'requires-approval';
+      let msgLabel = 'Pendiente de Pago';
+      if (end.status === 'EMITTED') {
+        statusLabel = 'approved';
+        msgLabel = 'Emitido con éxito';
+      } else if (end.status === 'REJECTED') {
+        statusLabel = 'blocked';
+        msgLabel = `Rechazado: ${end.rejectionReason || 'Reglas de negocio'}`;
+      } else if (end.status === 'PENDING_APPROVAL') {
+        statusLabel = 'requires-approval';
+        msgLabel = 'Espera: Aprobación auditoría';
+      }
+
+      const targetPlanClean = calc?.targetPlan?.trim();
+      const planSuffix = targetPlanClean && targetPlanClean !== 'Core' ? ` (${targetPlanClean})` : '';
+
+      recentActivity.push({
+        name: insuredName,
+        id: end.endorsementNumber || `END-${end.id.slice(0, 8).toUpperCase()}`,
+        type: `${typeLabel}${planSuffix}`,
+        amount: `${amount > 0 ? '+' : ''}$${amount.toFixed(2)}`,
+        status: statusLabel,
+        msg: msgLabel,
+      });
+    }
+
+    const totalTransactions = dbTotalCount;
+    const totalEmittedPremium = dbEmittedPremium;
+    const totalAutoApproved = dbEmittedCount;
+    const totalRejected = dbRejectedCount;
+    const totalAudit = dbPendingApprovalCount;
+
+    const autoApprovalRate = totalTransactions > 0 ? (totalAutoApproved / totalTransactions) * 100 : 0;
+    const rejectionRate = totalTransactions > 0 ? (totalRejected / totalTransactions) * 100 : 0;
+    const auditDeviationRate = totalTransactions > 0 ? (totalAudit / totalTransactions) * 100 : 0;
+
+    // Ramos
+    const totalRcv = rcvCount;
+    const totalCasco = cascoCount;
+    const totalBranch = totalRcv + totalCasco;
+    const rcvPct = totalBranch > 0 ? Math.round((totalRcv / totalBranch) * 100) : 0;
+    const cascoPct = totalBranch > 0 ? 100 - rcvPct : 0;
+
+    // Canales
+    const totalBackoffice = backofficeCount;
+    const totalPortal = portalCount;
+    const totalWhatsapp = whatsappCount;
+    const totalApi = apiCount;
+    const totalChan = totalBackoffice + totalPortal + totalWhatsapp + totalApi;
+
+    const chanDistribution = [
+      { name: 'Backoffice (Interno)', pct: totalChan > 0 ? Math.round((totalBackoffice / totalChan) * 100) : 0, color: 'var(--color-primary)' },
+      { name: 'Portal de Clientes', pct: totalChan > 0 ? Math.round((totalPortal / totalChan) * 100) : 0, color: 'var(--color-success)' },
+      { name: 'WhatsApp Bot', pct: totalChan > 0 ? Math.round((totalWhatsapp / totalChan) * 100) : 0, color: 'var(--color-accent)' },
+      { name: 'API de Corredores', pct: totalChan > 0 ? Math.round((totalApi / totalChan) * 100) : 0, color: 'var(--color-neutral)' },
+    ];
+
+    const finalActivities = recentActivity.slice(0, 6);
+
+    return {
+      totalPremium: totalEmittedPremium,
+      autoApprovalRate,
+      totalTransactions,
+      rejectionRate,
+      auditDeviationRate,
+      branchDistribution: [
+        { name: 'RCV Automóvil', pct: rcvPct },
+        { name: 'Casco Automóvil', pct: cascoPct }
+      ],
+      channelDistribution: chanDistribution,
+      recentActivity: finalActivities,
+    };
+  }
+
   // ─── Mapper: Prisma Model → Domain Entity ─────────────────────────────────
 
   private toDomain(record: any): Endorsement {

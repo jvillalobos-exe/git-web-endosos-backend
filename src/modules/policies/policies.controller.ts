@@ -70,12 +70,14 @@ La respuesta es un PolicySnapshot normalizado al formato del Motor.
     @Query('branchCode') branchCode?: string,
     @Query('status') status?: string,
     @Query('cedula') cedula?: string,
+    @Query('planCode') planCode?: string,
   ) {
     return this.queryPolicyUseCase.findMany(req.tenantId, {
       insuredName,
       branchCode,
       status: status as any,
       cedula,
+      planCode,
     });
   }
 

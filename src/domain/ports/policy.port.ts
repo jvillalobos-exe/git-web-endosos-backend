@@ -130,6 +130,7 @@ export interface PolicySearchFilters {
   page?: number;
   limit?: number;
   cedula?: string;
+  planCode?: string;
 }
 
 /**
