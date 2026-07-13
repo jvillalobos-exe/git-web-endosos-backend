@@ -42,7 +42,9 @@ export class TenantConfigRepository {
     });
 
     if (!config) {
-      throw new NotFoundException(`Configuration not found for tenant: ${tenantId}`);
+      throw new NotFoundException(
+        `Configuration not found for tenant: ${tenantId}`,
+      );
     }
 
     return config.schema as TenantConfigSchema;
@@ -52,7 +54,10 @@ export class TenantConfigRepository {
    * Crea o actualiza la configuración de un tenant (upsert).
    * Incrementa la versión automáticamente para auditoría.
    */
-  async upsert(tenantId: string, schema: TenantConfigSchema): Promise<TenantConfigSchema> {
+  async upsert(
+    tenantId: string,
+    schema: TenantConfigSchema,
+  ): Promise<TenantConfigSchema> {
     const existing = await this.prisma.tenantConfig.findUnique({
       where: { tenantId },
     });

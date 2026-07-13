@@ -64,7 +64,7 @@ export class EndorsementsController {
     private readonly endorsementRepo: IEndorsementRepository,
     private readonly tenantConfigRepo: TenantConfigRepository,
     private readonly calculationEngine: CalculationEngineService,
-  ) { }
+  ) {}
 
   // ─── POST /endorsements ──────────────────────────────────────────────────
 
@@ -105,7 +105,10 @@ Flujo completo de emisión de endoso:
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Datos inválidos o reglas bloqueantes' })
+  @ApiResponse({
+    status: 400,
+    description: 'Datos inválidos o reglas bloqueantes',
+  })
   @ApiResponse({ status: 404, description: 'Póliza o tenant no encontrado' })
   async create(
     @Body() dto: CreateEndorsementDto,
@@ -120,10 +123,25 @@ Flujo completo de emisión de endoso:
   @Get()
   @ApiOperation({
     summary: 'Listar endosos del tenant',
-    description: 'Retorna los endosos del tenant activo con filtros y paginación.',
+    description:
+      'Retorna los endosos del tenant activo con filtros y paginación.',
   })
-  @ApiQuery({ name: 'policyId', required: false, description: 'Filtrar por póliza' })
-  @ApiQuery({ name: 'status', required: false, enum: ['DRAFT', 'PENDING_PAYMENT', 'PENDING_APPROVAL', 'EMITTED', 'REJECTED'] })
+  @ApiQuery({
+    name: 'policyId',
+    required: false,
+    description: 'Filtrar por póliza',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: [
+      'DRAFT',
+      'PENDING_PAYMENT',
+      'PENDING_APPROVAL',
+      'EMITTED',
+      'REJECTED',
+    ],
+  })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
   @ApiResponse({ status: 200, description: 'Lista paginada de endosos' })
@@ -147,9 +165,7 @@ Flujo completo de emisión de endoso:
   @Get('dashboard/stats')
   @ApiOperation({ summary: 'Obtener estadísticas agregadas para el dashboard' })
   @ApiResponse({ status: 200, description: 'Estadísticas agregadas' })
-  async getDashboardStats(
-    @Req() req: Request & { tenantId: string },
-  ) {
+  async getDashboardStats(@Req() req: Request & { tenantId: string }) {
     return this.endorsementRepo.getDashboardStats(req.tenantId);
   }
 
@@ -206,7 +222,11 @@ Usado en el Paso 3 del wizard (Catálogo) para mostrar el semáforo de disponibi
     @Body() dto: EvaluateRulesDto,
     @Req() req: Request & { tenantId: string },
   ) {
-    return this.evaluateRules.execute(req.tenantId, dto.policyId, dto.channelId);
+    return this.evaluateRules.execute(
+      req.tenantId,
+      dto.policyId,
+      dto.channelId,
+    );
   }
 
   // ─── POST /endorsements/calculate ────────────────────────────────────────
@@ -233,7 +253,9 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     const policy = await this.queryPolicy.findById(req.tenantId, dto.policyId);
 
     // 2. Cargar configuración del tenant
-    const tenantConfig = await this.tenantConfigRepo.getByTenantId(req.tenantId);
+    const tenantConfig = await this.tenantConfigRepo.getByTenantId(
+      req.tenantId,
+    );
 
     // 3. Encontrar el producto y la ruta
     const allProducts = (tenantConfig.branches as any[]).flatMap(
@@ -268,7 +290,7 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     }
 
     // 4. Calcular
-    let targetPremium = this.calculationEngine.getPremiumFromTariff(
+    const targetPremium = this.calculationEngine.getPremiumFromTariff(
       product.tariff,
       route.targetPlanCode,
       policy.segmentCode,
@@ -276,7 +298,7 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
 
     if (targetPremium === 0) {
       throw new BadRequestException(
-        `No existe configuración de tarifa para el plan "${route.targetPlanCode}" y segmento "${policy.segmentCode}"`
+        `No existe configuración de tarifa para el plan "${route.targetPlanCode}" y segmento "${policy.segmentCode}"`,
       );
     }
 

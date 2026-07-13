@@ -78,23 +78,57 @@ export class Endorsement {
 
   // ─── Accessors (Read-only views) ──────────────────────────────────────────
 
-  get id(): string { return this.props.id; }
-  get tenantId(): string { return this.props.tenantId; }
-  get policyId(): string { return this.props.policyId; }
-  get endorsementTypeId(): string { return this.props.endorsementTypeId; }
-  get routeId(): string | null | undefined { return this.props.routeId; }
-  get channelId(): string { return this.props.channelId; }
-  get effectiveDate(): Date { return this.props.effectiveDate; }
-  get status(): EndorsementStatus { return this.props.status; }
-  get workflowStep(): string | null | undefined { return this.props.workflowStep; }
-  get calculation(): EndorsementCalculation | null | undefined { return this.props.calculation; }
-  get formData(): Record<string, unknown> | null | undefined { return this.props.formData; }
-  get appliedRules(): string[] { return this.props.appliedRules; }
-  get endorsementNumber(): string | null | undefined { return this.props.endorsementNumber; }
-  get rejectionReason(): string | null | undefined { return this.props.rejectionReason; }
-  get createdAt(): Date { return this.props.createdAt; }
-  get updatedAt(): Date { return this.props.updatedAt; }
-  get emittedAt(): Date | null | undefined { return this.props.emittedAt; }
+  get id(): string {
+    return this.props.id;
+  }
+  get tenantId(): string {
+    return this.props.tenantId;
+  }
+  get policyId(): string {
+    return this.props.policyId;
+  }
+  get endorsementTypeId(): string {
+    return this.props.endorsementTypeId;
+  }
+  get routeId(): string | null | undefined {
+    return this.props.routeId;
+  }
+  get channelId(): string {
+    return this.props.channelId;
+  }
+  get effectiveDate(): Date {
+    return this.props.effectiveDate;
+  }
+  get status(): EndorsementStatus {
+    return this.props.status;
+  }
+  get workflowStep(): string | null | undefined {
+    return this.props.workflowStep;
+  }
+  get calculation(): EndorsementCalculation | null | undefined {
+    return this.props.calculation;
+  }
+  get formData(): Record<string, unknown> | null | undefined {
+    return this.props.formData;
+  }
+  get appliedRules(): string[] {
+    return this.props.appliedRules;
+  }
+  get endorsementNumber(): string | null | undefined {
+    return this.props.endorsementNumber;
+  }
+  get rejectionReason(): string | null | undefined {
+    return this.props.rejectionReason;
+  }
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
+  get updatedAt(): Date {
+    return this.props.updatedAt;
+  }
+  get emittedAt(): Date | null | undefined {
+    return this.props.emittedAt;
+  }
 
   // ─── Business Rules ───────────────────────────────────────────────────────
 
@@ -103,14 +137,19 @@ export class Endorsement {
    * Solo los endosos en DRAFT o en flujo de aprobación pueden modificarse.
    */
   canBeModified(): boolean {
-    return [EndorsementStatus.DRAFT, EndorsementStatus.PENDING_APPROVAL].includes(this.props.status);
+    return [
+      EndorsementStatus.DRAFT,
+      EndorsementStatus.PENDING_APPROVAL,
+    ].includes(this.props.status);
   }
 
   /**
    * Verifica si el endoso ya fue finalizado (emitido o rechazado).
    */
   isFinalized(): boolean {
-    return [EndorsementStatus.EMITTED, EndorsementStatus.REJECTED].includes(this.props.status);
+    return [EndorsementStatus.EMITTED, EndorsementStatus.REJECTED].includes(
+      this.props.status,
+    );
   }
 
   /**
@@ -140,10 +179,18 @@ export class Endorsement {
    * Se activa cuando una regla requiere aprobación manual.
    * @param workflowStep - Nombre del paso de aprobación (rol responsable)
    */
-  sendToApproval(workflowStep: string, calculation?: EndorsementCalculation): Endorsement {
-    const validStates = [EndorsementStatus.DRAFT, EndorsementStatus.PENDING_PAYMENT];
+  sendToApproval(
+    workflowStep: string,
+    calculation?: EndorsementCalculation,
+  ): Endorsement {
+    const validStates = [
+      EndorsementStatus.DRAFT,
+      EndorsementStatus.PENDING_PAYMENT,
+    ];
     if (!validStates.includes(this.props.status)) {
-      throw new Error(`Cannot send to approval from status: ${this.props.status}`);
+      throw new Error(
+        `Cannot send to approval from status: ${this.props.status}`,
+      );
     }
     this.props.status = EndorsementStatus.PENDING_APPROVAL;
     this.props.workflowStep = workflowStep;
@@ -159,7 +206,9 @@ export class Endorsement {
    */
   emit(endorsementNumber: string): Endorsement {
     if (this.isFinalized()) {
-      throw new Error(`Cannot emit an endorsement in status: ${this.props.status}`);
+      throw new Error(
+        `Cannot emit an endorsement in status: ${this.props.status}`,
+      );
     }
     this.props.status = EndorsementStatus.EMITTED;
     this.props.endorsementNumber = endorsementNumber;
@@ -174,7 +223,9 @@ export class Endorsement {
    */
   reject(reason: string): Endorsement {
     if (this.isFinalized()) {
-      throw new Error(`Cannot reject an endorsement in status: ${this.props.status}`);
+      throw new Error(
+        `Cannot reject an endorsement in status: ${this.props.status}`,
+      );
     }
     this.props.status = EndorsementStatus.REJECTED;
     this.props.rejectionReason = reason;
@@ -194,7 +245,7 @@ export class Endorsement {
   private assertStatus(expected: EndorsementStatus, operation: string): void {
     if (this.props.status !== expected) {
       throw new Error(
-        `Operation "${operation}" requires status "${expected}", but current status is "${this.props.status}"`
+        `Operation "${operation}" requires status "${expected}", but current status is "${this.props.status}"`,
       );
     }
   }

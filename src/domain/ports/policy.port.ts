@@ -105,7 +105,10 @@ export interface IPolicyPort {
    * @param policyId - ID de la póliza a consultar
    * @returns El snapshot de la póliza, o null si no existe
    */
-  findByPolicyId(tenantId: string, policyId: string): Promise<PolicySnapshot | null>;
+  findByPolicyId(
+    tenantId: string,
+    policyId: string,
+  ): Promise<PolicySnapshot | null>;
 
   /**
    * Busca múltiples pólizas por criterios de búsqueda.
@@ -113,7 +116,10 @@ export interface IPolicyPort {
    * @param tenantId - ID del tenant
    * @param filters - Criterios de filtrado opcionales
    */
-  findMany(tenantId: string, filters?: PolicySearchFilters): Promise<PolicySnapshot[]>;
+  findMany(
+    tenantId: string,
+    filters?: PolicySearchFilters,
+  ): Promise<PolicySnapshot[]>;
 
   /**
    * Consulta el catálogo de planes disponibles en la API externa.

@@ -40,7 +40,10 @@ export interface IEndorsementRepository {
   /**
    * Lista endosos de un tenant con filtros y paginación.
    */
-  findMany(tenantId: string, filters?: EndorsementFilters): Promise<PaginatedResult<Endorsement>>;
+  findMany(
+    tenantId: string,
+    filters?: EndorsementFilters,
+  ): Promise<PaginatedResult<Endorsement>>;
 
   /**
    * Persiste un nuevo endoso.

@@ -36,7 +36,9 @@ export class TenantGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<Request & { tenantId: string }>();
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { tenantId: string }>();
 
     const tenantId = request.headers['x-tenant-id'] as string;
 
@@ -47,7 +49,8 @@ export class TenantGuard implements CanActivate {
     }
 
     // Validación básica de formato UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(tenantId)) {
       throw new BadRequestException(
         'El header X-Tenant-Id debe ser un UUID válido (formato: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)',

@@ -3,7 +3,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import type { IPolicyPort, PolicySnapshot, PolicySearchFilters } from '../../domain/ports/policy.port';
+import type {
+  IPolicyPort,
+  PolicySnapshot,
+  PolicySearchFilters,
+} from '../../domain/ports/policy.port';
 import { POLICY_PORT_TOKEN } from '../../domain/ports/policy.port';
 
 @Injectable()
@@ -21,7 +25,10 @@ export class QueryPolicyUseCase {
     return policy;
   }
 
-  async findMany(tenantId: string, filters?: PolicySearchFilters): Promise<PolicySnapshot[]> {
+  async findMany(
+    tenantId: string,
+    filters?: PolicySearchFilters,
+  ): Promise<PolicySnapshot[]> {
     return this.policyPort.findMany(tenantId, filters);
   }
 

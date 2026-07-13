@@ -1,0 +1,2558 @@
+{
+  "activeInsurerId": "la-mundial",
+  "insurers": [
+    {
+      "id": "la-mundial",
+      "name": "La Mundial de Seguros",
+      "shortName": "La Mundial",
+      "currency": {
+        "code": "USD",
+        "symbol": "$",
+        "decimals": 2,
+        "thousandsSep": ",",
+        "decimalSep": "."
+      },
+      "theme": {
+        "appearance": "light",
+        "logo": {
+          "url": "https://placehold.co/180x44/0C133A/FFFFFF?text=La+Mundial",
+          "altText": "La Mundial de Seguros",
+          "width": 180,
+          "height": 44,
+          "placement": "left",
+          "showNameBesideLogo": false,
+          "favicon": ""
+        },
+        "colors": {
+          "primary": "#0C133A",
+          "primaryHover": "#070B22",
+          "primaryForeground": "#FFFFFF",
+          "secondary": "#05C6DF",
+          "secondaryHover": "#04A6BC",
+          "secondaryForeground": "#FFFFFF",
+          "background": "#F4F6FB",
+          "surface": "#FFFFFF",
+          "surfaceElevated": "#F8FAFC",
+          "headerBackground": "rgba(255, 255, 255, 0.4)",
+          "headerForeground": "#0C133A",
+          "headerBorder": "rgba(12, 19, 58, 0.08)",
+          "sidebarBackground": "#0B1237",
+          "sidebarForeground": "#94A3B8",
+          "sidebarActiveBackground": "rgba(255, 255, 255, 0.08)",
+          "sidebarActiveForeground": "#FFFFFF",
+          "sidebarHoverBackground": "rgba(255, 255, 255, 0.04)",
+          "border": "rgba(12, 19, 58, 0.08)",
+          "borderStrong": "rgba(12, 19, 58, 0.15)",
+          "textPrimary": "#0C133A",
+          "textSecondary": "#475569",
+          "textMuted": "#94A3B8",
+          "textOnDark": "#FFFFFF",
+          "success": "#10B981",
+          "successLight": "#D1FAE5",
+          "successForeground": "#064E3B",
+          "warning": "#F59E0B",
+          "warningLight": "#FEF3C7",
+          "warningForeground": "#7C2D12",
+          "danger": "#EF4444",
+          "dangerLight": "#FEE2E2",
+          "dangerForeground": "#7F1D1D",
+          "info": "#3B82F6",
+          "infoLight": "#DBEAFE",
+          "infoForeground": "#1E40AF",
+          "neutral": "#64748B",
+          "neutralLight": "#F1F5F9",
+          "neutralForeground": "#334155",
+          "inputBackground": "#FFFFFF",
+          "inputBorder": "rgba(12, 19, 58, 0.12)",
+          "inputFocusBorder": "#05C6DF",
+          "inputFocusRing": "rgba(5, 198, 223, 0.15)",
+          "accent": "#ED7423",
+          "accentForeground": "#FFFFFF"
+        },
+        "typography": {
+          "fontFamily": "'Poppins', sans-serif",
+          "fontFamilyMono": "'JetBrains Mono', monospace",
+          "sizeXs": "0.75rem",
+          "sizeSm": "0.875rem",
+          "sizeMd": "1rem",
+          "sizeLg": "1.125rem",
+          "sizeXl": "1.25rem",
+          "size2xl": "1.5rem",
+          "size3xl": "1.875rem",
+          "weightNormal": 400,
+          "weightMedium": 500,
+          "weightSemibold": 600,
+          "weightBold": 700,
+          "lineHeightBase": "1.5",
+          "lineHeightTight": "1.25"
+        },
+        "shape": {
+          "radiusNone": "0px",
+          "radiusSm": "6px",
+          "radiusMd": "10px",
+          "radiusLg": "16px",
+          "radiusXl": "24px",
+          "radiusFull": "9999px",
+          "borderWidth": "1px",
+          "borderWidthStrong": "2px"
+        },
+        "shadows": {
+          "shadowSm": "0 1px 2px 0 rgba(0,0,0,0.05)",
+          "shadowMd": "0 4px 18px rgba(9, 17, 51, 0.06)",
+          "shadowLg": "0 12px 32px -12px rgba(9, 17, 51, 0.10)",
+          "shadowXl": "0 32px 80px -24px rgba(15, 26, 90, 0.16)",
+          "shadowInner": "inset 0 2px 4px 0 rgba(0,0,0,0.05)"
+        },
+        "sidebar": {
+          "width": "260px",
+          "collapsedWidth": "72px",
+          "showIcons": true,
+          "showLabels": true,
+          "separatorColor": "rgba(255,255,255,0.08)"
+        }
+      },
+      "endorsementTypes": [
+        {
+          "id": "ampliacion-plan",
+          "name": "Ampliación de Plan",
+          "family": "quantitative",
+          "icon": "TrendingUp",
+          "description": "Cambia el plan del asegurado a uno de mayor cobertura y prima.",
+          "modifiedVariables": [
+            "plan",
+            "annualPremium",
+            "sumInsured",
+            "receipt"
+          ],
+          "requiresPayment": true,
+          "requiresApproval": false,
+          "requiredDocuments": []
+        },
+        {
+          "id": "aumento-suma",
+          "name": "Aumento de Suma Asegurada",
+          "family": "quantitative",
+          "icon": "DollarSign",
+          "description": "Incrementa el monto asegurado de la póliza con ajuste de prima.",
+          "modifiedVariables": [
+            "sumInsured",
+            "annualPremium",
+            "receipt"
+          ],
+          "requiresPayment": true,
+          "requiresApproval": true,
+          "approvalWorkflowId": "wf-supervisor",
+          "requiredDocuments": [
+            "doc-declaracion"
+          ]
+        },
+        {
+          "id": "inclusion-cobertura",
+          "name": "Inclusión de Coberturas",
+          "family": "quantitative",
+          "icon": "PlusCircle",
+          "description": "Agrega coberturas adicionales a la póliza vigente.",
+          "modifiedVariables": [
+            "coverages",
+            "annualPremium",
+            "receipt"
+          ],
+          "requiresPayment": true,
+          "requiresApproval": false,
+          "requiredDocuments": []
+        },
+        {
+          "id": "cambio-beneficiario",
+          "name": "Cambio de Beneficiarios",
+          "family": "qualitative",
+          "icon": "Users",
+          "description": "Modifica los beneficiarios designados en la póliza.",
+          "modifiedVariables": [
+            "beneficiaries"
+          ],
+          "adminFeeFormula": "flatFee",
+          "adminFeeVariables": {
+            "flatFee": 15
+          },
+          "requiresPayment": false,
+          "requiresApproval": false,
+          "requiredDocuments": [
+            "doc-cedula-beneficiario"
+          ]
+        },
+        {
+          "id": "cambio-direccion",
+          "name": "Cambio de Dirección",
+          "family": "qualitative",
+          "icon": "MapPin",
+          "description": "Actualiza la dirección de riesgo o de contacto del asegurado.",
+          "modifiedVariables": [
+            "address"
+          ],
+          "adminFeeFormula": "0",
+          "requiresPayment": false,
+          "requiresApproval": false,
+          "requiredDocuments": []
+        },
+        {
+          "id": "cambio-tomador",
+          "name": "Cambio de Tomador/Titular",
+          "family": "qualitative",
+          "icon": "UserCog",
+          "description": "Cambia el titular o tomador de la póliza.",
+          "modifiedVariables": [
+            "holderName",
+            "holderId",
+            "contactInfo"
+          ],
+          "adminFeeFormula": "flatFee",
+          "adminFeeVariables": {
+            "flatFee": 25
+          },
+          "requiresPayment": false,
+          "requiresApproval": true,
+          "approvalWorkflowId": "wf-gerencia",
+          "requiredDocuments": [
+            "doc-cedula-tomador",
+            "doc-contrato"
+          ]
+        },
+        {
+          "id": "aditamento",
+          "name": "Inclusión de Aditamentos",
+          "family": "quantitative",
+          "icon": "Sparkles",
+          "description": "Agrega aditamentos (cavas, furgones, blindaje) que incrementan el valor y la prima.",
+          "modifiedVariables": [
+            "sumInsured",
+            "annualPremium",
+            "aditamentos",
+            "receipt"
+          ],
+          "requiresPayment": true,
+          "requiresApproval": false,
+          "requiredDocuments": []
+        }
+      ],
+      "workflows": [
+        {
+          "id": "wf-supervisor",
+          "name": "Aprobación Supervisor",
+          "steps": [
+            {
+              "order": 1,
+              "name": "Revisión Supervisor",
+              "role": "supervisor",
+              "slaHours": 4,
+              "onApprove": "emitido",
+              "onReject": "rechazado"
+            }
+          ]
+        },
+        {
+          "id": "wf-gerencia",
+          "name": "Aprobación Gerencia",
+          "steps": [
+            {
+              "order": 1,
+              "name": "Revisión Supervisor",
+              "role": "supervisor",
+              "slaHours": 4,
+              "onApprove": "pendiente-gerencia",
+              "onReject": "rechazado"
+            },
+            {
+              "order": 2,
+              "name": "Aprobación Gerencia",
+              "role": "gerencia",
+              "slaHours": 24,
+              "onApprove": "emitido",
+              "onReject": "rechazado"
+            }
+          ]
+        }
+      ],
+      "channels": [
+        {
+          "id": "backoffice",
+          "name": "Backoffice",
+          "icon": "Monitor",
+          "enabled": true,
+          "allowedEndorsementFamilies": [
+            "quantitative",
+            "qualitative"
+          ],
+          "allowedEndorsementTypeIds": [],
+          "maxPremiumWithoutApproval": 5000
+        },
+        {
+          "id": "portal-cliente",
+          "name": "Portal Cliente",
+          "icon": "Globe",
+          "enabled": true,
+          "allowedEndorsementFamilies": [
+            "quantitative",
+            "qualitative"
+          ],
+          "allowedEndorsementTypeIds": [
+            "ampliacion-plan",
+            "cambio-beneficiario",
+            "cambio-direccion"
+          ],
+          "maxPremiumWithoutApproval": 500
+        },
+        {
+          "id": "whatsapp",
+          "name": "WhatsApp",
+          "icon": "MessageCircle",
+          "enabled": true,
+          "allowedEndorsementFamilies": [
+            "qualitative"
+          ],
+          "allowedEndorsementTypeIds": [
+            "cambio-beneficiario",
+            "cambio-direccion"
+          ],
+          "maxPremiumWithoutApproval": 0
+        },
+        {
+          "id": "api",
+          "name": "API / Integración",
+          "icon": "Code2",
+          "enabled": true,
+          "allowedEndorsementFamilies": [
+            "quantitative",
+            "qualitative"
+          ],
+          "allowedEndorsementTypeIds": [],
+          "maxPremiumWithoutApproval": 99999
+        }
+      ],
+      "auditSchema": [
+        {
+          "eventType": "endorsement-created",
+          "fields": [
+            "endorsementId",
+            "policyId",
+            "endorsementTypeId",
+            "channelId",
+            "effectiveDate",
+            "totalCharge",
+            "status"
+          ]
+        },
+        {
+          "eventType": "rule-evaluated",
+          "fields": [
+            "policyId",
+            "ruleId",
+            "passed",
+            "action"
+          ]
+        },
+        {
+          "eventType": "batch-processed",
+          "fields": [
+            "batchId",
+            "total",
+            "eligible",
+            "rejected",
+            "additionalPremiumTotal"
+          ]
+        }
+      ],
+      "branches": [
+        {
+          "code": "rcv",
+          "name": "RCV Automóvil",
+          "icon": "Car",
+          "allowedEndorsementTypes": [
+            "ampliacion-plan",
+            "inclusion-cobertura",
+            "cambio-tomador",
+            "cambio-direccion"
+          ],
+          "products": [
+            {
+              "id": "rcv-auto",
+              "name": "RCV Automóvil",
+              "branchCode": "rcv",
+              "dynamicFormSchema": [
+                {
+                  "id": "placa",
+                  "label": "Placa del Vehículo",
+                  "type": "text",
+                  "required": true,
+                  "placeholder": "AB123CD",
+                  "endorsementTypeIds": [
+                    "ampliacion-plan",
+                    "inclusion-cobertura"
+                  ]
+                },
+                {
+                  "id": "nueva-direccion",
+                  "label": "Nueva Dirección",
+                  "type": "textarea",
+                  "required": true,
+                  "placeholder": "Av. Principal...",
+                  "endorsementTypeIds": [
+                    "cambio-direccion"
+                  ]
+                },
+                {
+                  "id": "nombre-nuevo-tomador",
+                  "label": "Nombre del Nuevo Tomador",
+                  "type": "text",
+                  "required": true,
+                  "endorsementTypeIds": [
+                    "cambio-tomador"
+                  ]
+                },
+                {
+                  "id": "cedula-nuevo-tomador",
+                  "label": "Cédula del Nuevo Tomador",
+                  "type": "text",
+                  "required": true,
+                  "endorsementTypeIds": [
+                    "cambio-tomador"
+                  ]
+                }
+              ],
+              "documentRequirements": [
+                {
+                  "id": "doc-declaracion",
+                  "name": "Declaración de Riesgo",
+                  "description": "Formulario de declaración firmado",
+                  "acceptedFormats": [
+                    "pdf"
+                  ],
+                  "maxSizeMb": 5,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "aumento-suma"
+                  ]
+                },
+                {
+                  "id": "doc-cedula-tomador",
+                  "name": "Cédula del Nuevo Tomador",
+                  "description": "Copia de cédula vigente",
+                  "acceptedFormats": [
+                    "pdf",
+                    "jpg",
+                    "png"
+                  ],
+                  "maxSizeMb": 2,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "cambio-tomador"
+                  ]
+                },
+                {
+                  "id": "doc-contrato",
+                  "name": "Contrato de Cesión",
+                  "description": "Contrato de cesión de póliza",
+                  "acceptedFormats": [
+                    "pdf"
+                  ],
+                  "maxSizeMb": 10,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "cambio-tomador"
+                  ]
+                }
+              ],
+              "tariff": {
+                "type": "table",
+                "table": [
+                  {
+                    "id": "t1",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "basico",
+                    "planLabel": "RCV Básico",
+                    "annualPremium": 150,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t2",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "rcv-grua",
+                    "planLabel": "RCV + Grúa",
+                    "annualPremium": 220,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t3",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "premium",
+                    "planLabel": "RCV Premium",
+                    "annualPremium": 350,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t4",
+                    "segmentCode": "taxi",
+                    "segmentLabel": "Taxi/Por Puesto",
+                    "planCode": "basico",
+                    "planLabel": "RCV Básico Taxi",
+                    "annualPremium": 280,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t5",
+                    "segmentCode": "taxi",
+                    "segmentLabel": "Taxi/Por Puesto",
+                    "planCode": "rcv-grua",
+                    "planLabel": "RCV + Grúa Taxi",
+                    "annualPremium": 380,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t6",
+                    "segmentCode": "taxi",
+                    "segmentLabel": "Taxi/Por Puesto",
+                    "planCode": "premium",
+                    "planLabel": "RCV Premium Taxi",
+                    "annualPremium": 520,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_auto_1k",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "Auto I",
+                    "planLabel": "Plan 1.000$",
+                    "annualPremium": 200,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_auto_2k",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "AutoII",
+                    "planLabel": "Plan 2.000$",
+                    "annualPremium": 300,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_auto_5k",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "Auto",
+                    "planLabel": "Plan 5.000$",
+                    "annualPremium": 450,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_auto_7k",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "AutoIV",
+                    "planLabel": "Plan 7.000$",
+                    "annualPremium": 650,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_auto_10k",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "AutoV",
+                    "planLabel": "Plan 10.000$",
+                    "annualPremium": 980,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_rcv_bas",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "RCVBAS",
+                    "planLabel": "Plan Básico RCV",
+                    "annualPremium": 80,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_bolip1",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "BOLIP1",
+                    "planLabel": "Plan Bolipuerto",
+                    "annualPremium": 150,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_rcvpru",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "RCVPRU",
+                    "planLabel": "Plan RCV Básico Prueba",
+                    "annualPremium": 240,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "t_rcvpr2",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "RCVPR2",
+                    "planLabel": "Plan RCV Básico Prueba 2",
+                    "annualPremium": 260,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  }
+                ]
+              },
+              "rules": [
+                {
+                  "id": "r-vigente",
+                  "name": "Póliza Vigente",
+                  "description": "La póliza debe estar en estado activo",
+                  "condition": "policy.status === 'active'",
+                  "conditionLabel": "Estado = Activo",
+                  "failureAction": "block",
+                  "failureMessage": "La póliza no está vigente. No es posible procesar endosos.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "r-sin-mora",
+                  "name": "Sin Mora",
+                  "description": "El asegurado no debe tener días de mora",
+                  "condition": "policy.debtDays === 0",
+                  "conditionLabel": "Días en mora = 0",
+                  "failureAction": "block",
+                  "failureMessage": "El asegurado tiene mora pendiente. Debe regularizar su situación para continuar.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "r-sin-siniestros",
+                  "name": "Sin Siniestros Abiertos",
+                  "description": "No debe haber siniestros abiertos activos",
+                  "condition": "policy.openClaims === 0",
+                  "conditionLabel": "Siniestros abiertos = 0",
+                  "failureAction": "send-to-approval",
+                  "failureMessage": "Existen siniestros abiertos. El endoso requiere aprobación de supervisor.",
+                  "severity": "warning",
+                  "active": true
+                },
+                {
+                  "id": "r-dias-minimos",
+                  "name": "Vigencia Mínima",
+                  "description": "La póliza debe tener al menos 30 días de vigencia restante",
+                  "condition": "policy.daysRemaining >= 30",
+                  "conditionLabel": "Días restantes ≥ 30",
+                  "failureAction": "warn",
+                  "failureMessage": "La póliza tiene menos de 30 días de vigencia. Se recomienda renovar antes del endoso.",
+                  "severity": "warning",
+                  "active": true
+                }
+              ],
+              "endorsementRoutes": [
+                {
+                  "id": "route-rcvpru-auto",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "RCVPRU",
+                  "targetPlanCode": "Auto",
+                  "targetPlanLabel": "Plan 5.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-rcvpru-autoiv",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "RCVPRU",
+                  "targetPlanCode": "AutoIV",
+                  "targetPlanLabel": "Plan 7.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-rcvpru-autov",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "RCVPRU",
+                  "targetPlanCode": "AutoV",
+                  "targetPlanLabel": "Plan 10.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-rcvbas-auto",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "RCVBAS",
+                  "targetPlanCode": "Auto",
+                  "targetPlanLabel": "Plan 5.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-rcvbas-autoiv",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "RCVBAS",
+                  "targetPlanCode": "AutoIV",
+                  "targetPlanLabel": "Plan 7.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-rcvbas-autov",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "RCVBAS",
+                  "targetPlanCode": "AutoV",
+                  "targetPlanLabel": "Plan 10.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-bolip1-auto",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "BOLIP1",
+                  "targetPlanCode": "Auto",
+                  "targetPlanLabel": "Plan 5.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-bolip1-autoiv",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "BOLIP1",
+                  "targetPlanCode": "AutoIV",
+                  "targetPlanLabel": "Plan 7.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-bolip1-autov",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "BOLIP1",
+                  "targetPlanCode": "AutoV",
+                  "targetPlanLabel": "Plan 10.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-auto-autoiv",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "Auto",
+                  "targetPlanCode": "AutoIV",
+                  "targetPlanLabel": "Plan 7.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-auto-autov",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "Auto",
+                  "targetPlanCode": "AutoV",
+                  "targetPlanLabel": "Plan 10.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-autoiv-autov",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "AutoIV",
+                  "targetPlanCode": "AutoV",
+                  "targetPlanLabel": "Plan 10.000$",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "funerario",
+          "name": "Seguro Funerario",
+          "icon": "Heart",
+          "allowedEndorsementTypes": [
+            "ampliacion-plan",
+            "cambio-beneficiario",
+            "cambio-tomador"
+          ],
+          "products": [
+            {
+              "id": "funerario-ind",
+              "name": "Funerario Individual",
+              "branchCode": "funerario",
+              "dynamicFormSchema": [
+                {
+                  "id": "nombre-beneficiario",
+                  "label": "Nombre del Nuevo Beneficiario",
+                  "type": "text",
+                  "required": true,
+                  "endorsementTypeIds": [
+                    "cambio-beneficiario"
+                  ]
+                },
+                {
+                  "id": "parentesco",
+                  "label": "Parentesco",
+                  "type": "select",
+                  "required": true,
+                  "options": [
+                    {
+                      "value": "conyuge",
+                      "label": "Cónyuge"
+                    },
+                    {
+                      "value": "hijo",
+                      "label": "Hijo/a"
+                    },
+                    {
+                      "value": "padre",
+                      "label": "Padre/Madre"
+                    },
+                    {
+                      "value": "otro",
+                      "label": "Otro"
+                    }
+                  ],
+                  "endorsementTypeIds": [
+                    "cambio-beneficiario"
+                  ]
+                }
+              ],
+              "documentRequirements": [
+                {
+                  "id": "doc-cedula-beneficiario",
+                  "name": "Cédula del Beneficiario",
+                  "description": "Copia de cédula del nuevo beneficiario",
+                  "acceptedFormats": [
+                    "pdf",
+                    "jpg",
+                    "png"
+                  ],
+                  "maxSizeMb": 2,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "cambio-beneficiario"
+                  ]
+                }
+              ],
+              "tariff": {
+                "type": "table",
+                "table": [
+                  {
+                    "id": "f1",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "plan-1000",
+                    "planLabel": "Plan 1.000",
+                    "annualPremium": 95,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "f2",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "plan-3000",
+                    "planLabel": "Plan 3.000",
+                    "annualPremium": 185,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "f3",
+                    "segmentCode": "familiar",
+                    "segmentLabel": "Grupo Familiar",
+                    "planCode": "plan-1000",
+                    "planLabel": "Plan 1.000 Familiar",
+                    "annualPremium": 220,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "f4",
+                    "segmentCode": "familiar",
+                    "segmentLabel": "Grupo Familiar",
+                    "planCode": "plan-3000",
+                    "planLabel": "Plan 3.000 Familiar",
+                    "annualPremium": 420,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  }
+                ]
+              },
+              "rules": [
+                {
+                  "id": "r-vig-fun",
+                  "name": "Póliza Vigente",
+                  "description": "Póliza debe estar activa",
+                  "condition": "policy.status === 'active'",
+                  "conditionLabel": "Estado = Activo",
+                  "failureAction": "block",
+                  "failureMessage": "La póliza no está vigente.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "r-mora-fun",
+                  "name": "Sin Mora",
+                  "description": "Sin días de mora",
+                  "condition": "policy.debtDays === 0",
+                  "conditionLabel": "Sin mora",
+                  "failureAction": "block",
+                  "failureMessage": "Mora pendiente. Regularice su cuenta.",
+                  "severity": "error",
+                  "active": true
+                }
+              ],
+              "endorsementRoutes": [
+                {
+                  "id": "route-fun-1000-3000-ind",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "plan-1000",
+                  "targetPlanCode": "plan-3000",
+                  "targetPlanLabel": "Plan 3.000",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-fun-1000-3000-fam",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "plan-1000",
+                  "targetPlanCode": "plan-3000",
+                  "targetPlanLabel": "Plan 3.000 Familiar",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "vida",
+          "name": "Vida Individual",
+          "icon": "Activity",
+          "allowedEndorsementTypes": [
+            "aumento-suma",
+            "cambio-beneficiario",
+            "cambio-tomador"
+          ],
+          "products": [
+            {
+              "id": "vida-ind",
+              "name": "Vida Individual",
+              "branchCode": "vida",
+              "dynamicFormSchema": [
+                {
+                  "id": "nueva-suma",
+                  "label": "Nueva Suma Asegurada",
+                  "type": "number",
+                  "required": true,
+                  "placeholder": "50000",
+                  "endorsementTypeIds": [
+                    "aumento-suma"
+                  ]
+                },
+                {
+                  "id": "beneficiarios-vida",
+                  "label": "Nuevo Beneficiario",
+                  "type": "text",
+                  "required": true,
+                  "endorsementTypeIds": [
+                    "cambio-beneficiario"
+                  ]
+                },
+                {
+                  "id": "porcentaje",
+                  "label": "% de Participación",
+                  "type": "number",
+                  "required": true,
+                  "placeholder": "100",
+                  "endorsementTypeIds": [
+                    "cambio-beneficiario"
+                  ]
+                }
+              ],
+              "documentRequirements": [
+                {
+                  "id": "doc-decl-vida",
+                  "name": "Declaración de Salud",
+                  "description": "Formulario de declaración de asegurabilidad",
+                  "acceptedFormats": [
+                    "pdf"
+                  ],
+                  "maxSizeMb": 5,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "aumento-suma"
+                  ]
+                },
+                {
+                  "id": "doc-cedula-ben-vida",
+                  "name": "Cédula del Beneficiario",
+                  "description": "Copia de cédula vigente",
+                  "acceptedFormats": [
+                    "pdf",
+                    "jpg"
+                  ],
+                  "maxSizeMb": 2,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "cambio-beneficiario"
+                  ]
+                }
+              ],
+              "tariff": {
+                "type": "table",
+                "table": [
+                  {
+                    "id": "v1",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "basico",
+                    "planLabel": "Vida Básico (SA 20K)",
+                    "annualPremium": 240,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "v2",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "estandar",
+                    "planLabel": "Vida Estándar (SA 50K)",
+                    "annualPremium": 480,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "v3",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "premium",
+                    "planLabel": "Vida Premium (SA 100K)",
+                    "annualPremium": 860,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  }
+                ]
+              },
+              "rules": [
+                {
+                  "id": "r-vig-vida",
+                  "name": "Póliza Vigente",
+                  "description": "Estado activo requerido",
+                  "condition": "policy.status === 'active'",
+                  "conditionLabel": "Estado = Activo",
+                  "failureAction": "block",
+                  "failureMessage": "Póliza no vigente.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "r-mora-vida",
+                  "name": "Sin Mora",
+                  "description": "Sin deuda pendiente",
+                  "condition": "policy.debtDays === 0",
+                  "conditionLabel": "Sin mora",
+                  "failureAction": "block",
+                  "failureMessage": "Mora pendiente.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "r-edad-vida",
+                  "name": "Vigencia Suficiente",
+                  "description": "Mínimo 60 días restantes para aumentos de suma",
+                  "condition": "policy.daysRemaining >= 60",
+                  "conditionLabel": "Días restantes ≥ 60",
+                  "failureAction": "send-to-approval",
+                  "failureMessage": "Menos de 60 días de vigencia. Requiere aprobación.",
+                  "severity": "warning",
+                  "active": true
+                }
+              ],
+              "endorsementRoutes": [
+                {
+                  "id": "route-vida-bas-est",
+                  "endorsementTypeId": "aumento-suma",
+                  "sourcePlanCode": "basico",
+                  "targetPlanCode": "estandar",
+                  "targetPlanLabel": "Vida Estándar (SA 50K)",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "api"
+                  ],
+                  "requiresApproval": true,
+                  "approvalWorkflowId": "wf-supervisor",
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-vida-est-pre",
+                  "endorsementTypeId": "aumento-suma",
+                  "sourcePlanCode": "estandar",
+                  "targetPlanCode": "premium",
+                  "targetPlanLabel": "Vida Premium (SA 100K)",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "api"
+                  ],
+                  "requiresApproval": true,
+                  "approvalWorkflowId": "wf-gerencia",
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "casco",
+          "name": "Casco Automóvil",
+          "icon": "Car",
+          "allowedEndorsementTypes": [
+            "ampliacion-plan",
+            "aumento-suma",
+            "aditamento",
+            "cambio-tomador",
+            "cambio-direccion"
+          ],
+          "products": [
+            {
+              "id": "casco-auto",
+              "name": "Casco Automóvil",
+              "branchCode": "casco",
+              "dynamicFormSchema": [
+                {
+                  "id": "placa",
+                  "label": "Placa del Vehículo",
+                  "type": "text",
+                  "required": true,
+                  "placeholder": "AB123CD",
+                  "endorsementTypeIds": [
+                    "ampliacion-plan",
+                    "aumento-suma",
+                    "aditamento"
+                  ]
+                },
+                {
+                  "id": "tipo-unidad",
+                  "label": "Tipo de Unidad",
+                  "type": "select",
+                  "required": true,
+                  "options": [
+                    {
+                      "value": "sedan",
+                      "label": "Sedán / Familiar"
+                    },
+                    {
+                      "value": "camion",
+                      "label": "Camión / Unidad Carga"
+                    },
+                    {
+                      "value": "moto",
+                      "label": "Motocicleta"
+                    }
+                  ],
+                  "endorsementTypeIds": [
+                    "aditamento"
+                  ]
+                },
+                {
+                  "id": "aditamento-tipo",
+                  "label": "Aditamento a Incluir",
+                  "type": "select",
+                  "required": true,
+                  "options": [
+                    {
+                      "value": "blindaje",
+                      "label": "Blindaje (Todos los Vehículos)"
+                    },
+                    {
+                      "value": "cava",
+                      "label": "Cava (Camiones)"
+                    },
+                    {
+                      "value": "plataforma",
+                      "label": "Plataforma / Baranda (Camiones)"
+                    },
+                    {
+                      "value": "furgon",
+                      "label": "Furgón (Camiones)"
+                    }
+                  ],
+                  "endorsementTypeIds": [
+                    "aditamento"
+                  ]
+                },
+                {
+                  "id": "aditamento-valor",
+                  "label": "Valor del Aditamento ($)",
+                  "type": "number",
+                  "required": true,
+                  "placeholder": "3000",
+                  "endorsementTypeIds": [
+                    "aditamento"
+                  ]
+                }
+              ],
+              "documentRequirements": [
+                {
+                  "id": "doc-inspeccion",
+                  "name": "Certificado de Inspección / Fotos",
+                  "description": "Fotos del vehículo con aditamento instalado",
+                  "acceptedFormats": [
+                    "pdf",
+                    "jpg",
+                    "png"
+                  ],
+                  "maxSizeMb": 10,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "aditamento",
+                    "aumento-suma"
+                  ]
+                }
+              ],
+              "tariff": {
+                "type": "table",
+                "table": [
+                  {
+                    "id": "c1",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "basico",
+                    "planLabel": "Casco Básico",
+                    "annualPremium": 400,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "c2",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "estandar",
+                    "planLabel": "Casco Estándar",
+                    "annualPremium": 650,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "c3",
+                    "segmentCode": "particular",
+                    "segmentLabel": "Particular",
+                    "planCode": "premium",
+                    "planLabel": "Casco Premium",
+                    "annualPremium": 980,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  }
+                ]
+              },
+              "rules": [
+                {
+                  "id": "c-vigente",
+                  "name": "Póliza Activa",
+                  "description": "La póliza debe estar activa",
+                  "condition": "policy.status === 'active'",
+                  "conditionLabel": "Estado = Activo",
+                  "failureAction": "block",
+                  "failureMessage": "La póliza de Casco no está vigente.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "c-sin-mora",
+                  "name": "Sin Recibos Vencidos",
+                  "description": "El contratante no debe presentar recibos vencidos",
+                  "condition": "policy.debtDays === 0",
+                  "conditionLabel": "Días en mora = 0",
+                  "failureAction": "block",
+                  "failureMessage": "No se permiten endosos si existen recibos vencidos pendientes de pago.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "c-suma-max",
+                  "name": "Límite Suma Asegurada",
+                  "description": "La suma asegurada no debe superar el límite de $100,000 sin aprobación",
+                  "condition": "policy.sumInsured <= 100000",
+                  "conditionLabel": "Suma asegurada ≤ 100.000",
+                  "failureAction": "send-to-approval",
+                  "failureMessage": "La suma asegurada supera el límite máximo de $100,000. Requiere aprobación técnica.",
+                  "severity": "warning",
+                  "active": true
+                },
+                {
+                  "id": "c-aditamiento-unidad",
+                  "name": "Regla de Aditamentos por Unidad",
+                  "description": "Valida que sedanes solo agreguen Blindaje",
+                  "condition": "!(formData['tipo-unidad'] === 'sedan' && ['cava', 'plataforma', 'furgon'].includes(formData['aditamento-tipo']))",
+                  "conditionLabel": "Filtro Aditamentos Sedán",
+                  "failureAction": "block",
+                  "failureMessage": "Las cavas, plataformas y furgones solo están permitidos para Camiones / Unidades de Carga.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "c-frecuencia",
+                  "name": "Restricción Cambio de Frecuencia",
+                  "description": "No permite cambiar frecuencia si faltan menos meses que el ciclo seleccionado",
+                  "condition": "policy.daysRemaining >= 150",
+                  "conditionLabel": "Vigencia restante ≥ 5 meses",
+                  "failureAction": "warn",
+                  "failureMessage": "Vigencia restante es menor a 5 meses. No se recomienda cambiar frecuencia de pago.",
+                  "severity": "warning",
+                  "active": true
+                }
+              ],
+              "endorsementRoutes": [
+                {
+                  "id": "route-casco-bas-est",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "basico",
+                  "targetPlanCode": "estandar",
+                  "targetPlanLabel": "Casco Estándar",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-casco-est-pre",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "estandar",
+                  "targetPlanCode": "premium",
+                  "targetPlanLabel": "Casco Premium",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "portal-cliente",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-casco-bas-pre",
+                  "endorsementTypeId": "ampliacion-plan",
+                  "sourcePlanCode": "basico",
+                  "targetPlanCode": "premium",
+                  "targetPlanLabel": "Casco Premium",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "api"
+                  ],
+                  "requiresApproval": true,
+                  "approvalWorkflowId": "wf-gerencia",
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "demoPortfolios": [
+        {
+          "policyId": "LM-00012345",
+          "insuredName": "Carlos Ramírez",
+          "productId": "rcv-auto",
+          "productName": "RCV Automóvil",
+          "branchCode": "rcv",
+          "planCode": "basico",
+          "planLabel": "RCV Básico",
+          "segmentCode": "particular",
+          "segmentLabel": "Particular",
+          "sumInsured": 50000,
+          "startDate": "2025-01-15",
+          "endDate": "2026-01-15",
+          "daysRemaining": 194,
+          "annualPremium": 150,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "LM-00023456",
+          "insuredName": "María González",
+          "productId": "rcv-auto",
+          "productName": "RCV Automóvil",
+          "branchCode": "rcv",
+          "planCode": "rcv-grua",
+          "planLabel": "RCV + Grúa",
+          "segmentCode": "particular",
+          "segmentLabel": "Particular",
+          "sumInsured": 50000,
+          "startDate": "2025-03-01",
+          "endDate": "2026-03-01",
+          "daysRemaining": 239,
+          "annualPremium": 220,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 1,
+          "currency": "USD"
+        },
+        {
+          "policyId": "LM-00034567",
+          "insuredName": "Pedro Martínez",
+          "productId": "rcv-auto",
+          "productName": "RCV Automóvil",
+          "branchCode": "rcv",
+          "planCode": "basico",
+          "planLabel": "RCV Básico Taxi",
+          "segmentCode": "taxi",
+          "segmentLabel": "Taxi",
+          "sumInsured": 50000,
+          "startDate": "2024-12-01",
+          "endDate": "2025-12-01",
+          "daysRemaining": 149,
+          "annualPremium": 280,
+          "status": "active",
+          "debtDays": 30,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "FUN-001001",
+          "insuredName": "Ana Rodríguez",
+          "productId": "funerario-ind",
+          "productName": "Funerario Individual",
+          "branchCode": "funerario",
+          "planCode": "plan-1000",
+          "planLabel": "Plan 1.000",
+          "segmentCode": "individual",
+          "segmentLabel": "Individual",
+          "sumInsured": 1000,
+          "startDate": "2025-02-01",
+          "endDate": "2026-02-01",
+          "daysRemaining": 211,
+          "annualPremium": 95,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "FUN-002002",
+          "insuredName": "José López",
+          "productId": "funerario-ind",
+          "productName": "Funerario Individual",
+          "branchCode": "funerario",
+          "planCode": "plan-1000",
+          "planLabel": "Plan 1.000 Familiar",
+          "segmentCode": "familiar",
+          "segmentLabel": "Familiar",
+          "sumInsured": 1000,
+          "startDate": "2024-11-15",
+          "endDate": "2025-11-15",
+          "daysRemaining": 133,
+          "annualPremium": 220,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "VIDA-0054321",
+          "insuredName": "Luisa Pérez",
+          "productId": "vida-ind",
+          "productName": "Vida Individual",
+          "branchCode": "vida",
+          "planCode": "basico",
+          "planLabel": "Vida Básico (SA 20K)",
+          "segmentCode": "individual",
+          "segmentLabel": "Individual",
+          "sumInsured": 20000,
+          "startDate": "2025-04-01",
+          "endDate": "2026-04-01",
+          "daysRemaining": 270,
+          "annualPremium": 240,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "LM-00098765",
+          "insuredName": "Roberto Silva",
+          "productId": "rcv-auto",
+          "productName": "RCV Automóvil",
+          "branchCode": "rcv",
+          "planCode": "basico",
+          "planLabel": "RCV Básico",
+          "segmentCode": "particular",
+          "segmentLabel": "Particular",
+          "sumInsured": 50000,
+          "startDate": "2025-06-01",
+          "endDate": "2026-06-01",
+          "daysRemaining": 360,
+          "annualPremium": 150,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "LM-00076543",
+          "insuredName": "Carmen Flores",
+          "productId": "rcv-auto",
+          "productName": "RCV Automóvil",
+          "branchCode": "rcv",
+          "planCode": "basico",
+          "planLabel": "RCV Básico",
+          "segmentCode": "particular",
+          "segmentLabel": "Particular",
+          "sumInsured": 50000,
+          "startDate": "2024-07-01",
+          "endDate": "2025-07-01",
+          "daysRemaining": 25,
+          "annualPremium": 150,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "LM-00088990",
+          "insuredName": "Roberto Silva (Casco)",
+          "productId": "casco-auto",
+          "productName": "Casco Automóvil",
+          "branchCode": "casco",
+          "planCode": "basico",
+          "planLabel": "Casco Básico",
+          "segmentCode": "particular",
+          "segmentLabel": "Particular",
+          "sumInsured": 25000,
+          "startDate": "2025-06-01",
+          "endDate": "2026-06-01",
+          "daysRemaining": 194,
+          "annualPremium": 400,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "LM-00077889",
+          "insuredName": "Marta Díaz (Casco Mora)",
+          "productId": "casco-auto",
+          "productName": "Casco Automóvil",
+          "branchCode": "casco",
+          "planCode": "basico",
+          "planLabel": "Casco Básico",
+          "segmentCode": "particular",
+          "segmentLabel": "Particular",
+          "sumInsured": 30000,
+          "startDate": "2025-01-10",
+          "endDate": "2026-01-10",
+          "daysRemaining": 80,
+          "annualPremium": 400,
+          "status": "active",
+          "debtDays": 45,
+          "openClaims": 0,
+          "currency": "USD"
+        }
+      ]
+    },
+    {
+      "id": "demo-sa",
+      "name": "Aseguradora Demo S.A.",
+      "shortName": "Demo SA",
+      "currency": {
+        "code": "USD",
+        "symbol": "$",
+        "decimals": 2,
+        "thousandsSep": ",",
+        "decimalSep": "."
+      },
+      "theme": {
+        "appearance": "dark",
+        "logo": {
+          "url": "https://placehold.co/160x44/7C3AED/FFFFFF?text=Demo+SA",
+          "altText": "Aseguradora Demo S.A.",
+          "width": 160,
+          "height": 44,
+          "placement": "left",
+          "showNameBesideLogo": true
+        },
+        "colors": {
+          "primary": "#7C3AED",
+          "primaryHover": "#6D28D9",
+          "primaryForeground": "#FFFFFF",
+          "secondary": "#EC4899",
+          "secondaryHover": "#DB2777",
+          "secondaryForeground": "#FFFFFF",
+          "background": "#0F0F1A",
+          "surface": "#1A1A2E",
+          "surfaceElevated": "#232338",
+          "headerBackground": "#0A0A14",
+          "headerForeground": "#E2E8F0",
+          "headerBorder": "#2D2D4A",
+          "sidebarBackground": "#12121F",
+          "sidebarForeground": "#94A3B8",
+          "sidebarActiveBackground": "#7C3AED",
+          "sidebarActiveForeground": "#FFFFFF",
+          "sidebarHoverBackground": "rgba(124,58,237,0.12)",
+          "border": "#2D2D4A",
+          "borderStrong": "#3D3D5A",
+          "textPrimary": "#F1F5F9",
+          "textSecondary": "#94A3B8",
+          "textMuted": "#64748B",
+          "textOnDark": "#FFFFFF",
+          "success": "#10B981",
+          "successLight": "#064E3B",
+          "successForeground": "#6EE7B7",
+          "warning": "#F59E0B",
+          "warningLight": "#451A03",
+          "warningForeground": "#FCD34D",
+          "danger": "#EF4444",
+          "dangerLight": "#450A0A",
+          "dangerForeground": "#FCA5A5",
+          "info": "#818CF8",
+          "infoLight": "#1E1B4B",
+          "infoForeground": "#C7D2FE",
+          "neutral": "#475569",
+          "neutralLight": "#1E293B",
+          "neutralForeground": "#94A3B8",
+          "inputBackground": "#1A1A2E",
+          "inputBorder": "#2D2D4A",
+          "inputFocusBorder": "#7C3AED",
+          "inputFocusRing": "rgba(124,58,237,0.25)",
+          "accent": "#7C3AED",
+          "accentForeground": "#FFFFFF"
+        },
+        "typography": {
+          "fontFamily": "'Outfit', sans-serif",
+          "fontFamilyMono": "'Fira Code', monospace",
+          "sizeXs": "0.75rem",
+          "sizeSm": "0.875rem",
+          "sizeMd": "1rem",
+          "sizeLg": "1.125rem",
+          "sizeXl": "1.25rem",
+          "size2xl": "1.5rem",
+          "size3xl": "1.875rem",
+          "weightNormal": 400,
+          "weightMedium": 500,
+          "weightSemibold": 600,
+          "weightBold": 700,
+          "lineHeightBase": "1.5",
+          "lineHeightTight": "1.25"
+        },
+        "shape": {
+          "radiusNone": "0px",
+          "radiusSm": "6px",
+          "radiusMd": "10px",
+          "radiusLg": "16px",
+          "radiusXl": "20px",
+          "radiusFull": "9999px",
+          "borderWidth": "1px",
+          "borderWidthStrong": "2px"
+        },
+        "shadows": {
+          "shadowSm": "0 1px 3px 0 rgba(0,0,0,0.3)",
+          "shadowMd": "0 4px 6px -1px rgba(124,58,237,0.20), 0 2px 4px -2px rgba(124,58,237,0.10)",
+          "shadowLg": "0 10px 15px -3px rgba(0,0,0,0.40), 0 4px 6px -4px rgba(0,0,0,0.20)",
+          "shadowXl": "0 20px 25px -5px rgba(0,0,0,0.50), 0 8px 10px -6px rgba(0,0,0,0.30)",
+          "shadowInner": "inset 0 2px 4px 0 rgba(0,0,0,0.30)"
+        },
+        "sidebar": {
+          "width": "260px",
+          "collapsedWidth": "64px",
+          "showIcons": true,
+          "showLabels": true,
+          "separatorColor": "#2D2D4A"
+        }
+      },
+      "endorsementTypes": [
+        {
+          "id": "ampliacion-cobertura-salud",
+          "name": "Ampliación Cobertura Salud",
+          "family": "quantitative",
+          "icon": "HeartPulse",
+          "description": "Amplía el plan de salud colectivo a una cobertura superior.",
+          "modifiedVariables": [
+            "plan",
+            "annualPremium",
+            "coverages"
+          ],
+          "requiresPayment": true,
+          "requiresApproval": false,
+          "requiredDocuments": []
+        },
+        {
+          "id": "inclusion-miembro",
+          "name": "Inclusión de Miembro",
+          "family": "quantitative",
+          "icon": "UserPlus",
+          "description": "Incluye un nuevo miembro al grupo familiar o colectivo.",
+          "modifiedVariables": [
+            "members",
+            "annualPremium"
+          ],
+          "requiresPayment": true,
+          "requiresApproval": true,
+          "approvalWorkflowId": "wf-sup-demo",
+          "requiredDocuments": [
+            "doc-cedula-demo"
+          ]
+        },
+        {
+          "id": "cambio-dir-hogar",
+          "name": "Cambio de Dirección del Riesgo",
+          "family": "qualitative",
+          "icon": "Home",
+          "description": "Actualiza la dirección del inmueble asegurado.",
+          "modifiedVariables": [
+            "riskAddress"
+          ],
+          "adminFeeFormula": "0",
+          "requiresPayment": false,
+          "requiresApproval": false,
+          "requiredDocuments": []
+        },
+        {
+          "id": "cambio-ben-salud",
+          "name": "Cambio de Beneficiarios Salud",
+          "family": "qualitative",
+          "icon": "Users",
+          "description": "Modifica los beneficiarios del plan de salud.",
+          "modifiedVariables": [
+            "beneficiaries"
+          ],
+          "adminFeeFormula": "flatFee",
+          "adminFeeVariables": {
+            "flatFee": 10
+          },
+          "requiresPayment": false,
+          "requiresApproval": false,
+          "requiredDocuments": [
+            "doc-cedula-demo"
+          ]
+        },
+        {
+          "id": "reduccion-deducible",
+          "name": "Reducción de Deducible",
+          "family": "quantitative",
+          "icon": "ShieldCheck",
+          "description": "Reduce el deducible del seguro de hogar.",
+          "modifiedVariables": [
+            "deductible",
+            "annualPremium"
+          ],
+          "requiresPayment": true,
+          "requiresApproval": false,
+          "requiredDocuments": []
+        },
+        {
+          "id": "exclusion-miembro",
+          "name": "Exclusión de Miembro",
+          "family": "qualitative",
+          "icon": "UserMinus",
+          "description": "Excluye un miembro del colectivo con ajuste de prima.",
+          "modifiedVariables": [
+            "members",
+            "annualPremium"
+          ],
+          "adminFeeFormula": "0",
+          "requiresPayment": false,
+          "requiresApproval": true,
+          "approvalWorkflowId": "wf-sup-demo",
+          "requiredDocuments": []
+        }
+      ],
+      "workflows": [
+        {
+          "id": "wf-sup-demo",
+          "name": "Aprobación Supervisor Demo",
+          "steps": [
+            {
+              "order": 1,
+              "name": "Revisión",
+              "role": "supervisor",
+              "slaHours": 8,
+              "onApprove": "emitido",
+              "onReject": "rechazado"
+            }
+          ]
+        }
+      ],
+      "channels": [
+        {
+          "id": "backoffice",
+          "name": "Backoffice",
+          "icon": "Monitor",
+          "enabled": true,
+          "allowedEndorsementFamilies": [
+            "quantitative",
+            "qualitative"
+          ],
+          "allowedEndorsementTypeIds": [],
+          "maxPremiumWithoutApproval": 10000
+        },
+        {
+          "id": "portal-cliente",
+          "name": "Portal Cliente",
+          "icon": "Globe",
+          "enabled": true,
+          "allowedEndorsementFamilies": [
+            "qualitative"
+          ],
+          "allowedEndorsementTypeIds": [
+            "cambio-dir-hogar",
+            "cambio-ben-salud"
+          ],
+          "maxPremiumWithoutApproval": 0
+        },
+        {
+          "id": "api",
+          "name": "API / Integración",
+          "icon": "Code2",
+          "enabled": true,
+          "allowedEndorsementFamilies": [
+            "quantitative",
+            "qualitative"
+          ],
+          "allowedEndorsementTypeIds": [],
+          "maxPremiumWithoutApproval": 99999
+        }
+      ],
+      "auditSchema": [
+        {
+          "eventType": "endorsement-created",
+          "fields": [
+            "endorsementId",
+            "policyId",
+            "endorsementTypeId",
+            "channelId",
+            "effectiveDate",
+            "totalCharge",
+            "status"
+          ]
+        },
+        {
+          "eventType": "batch-processed",
+          "fields": [
+            "batchId",
+            "total",
+            "eligible",
+            "rejected"
+          ]
+        }
+      ],
+      "branches": [
+        {
+          "code": "salud",
+          "name": "Salud Colectiva",
+          "icon": "HeartPulse",
+          "allowedEndorsementTypes": [
+            "ampliacion-cobertura-salud",
+            "inclusion-miembro",
+            "exclusion-miembro",
+            "cambio-ben-salud"
+          ],
+          "products": [
+            {
+              "id": "salud-col",
+              "name": "Salud Colectiva",
+              "branchCode": "salud",
+              "dynamicFormSchema": [
+                {
+                  "id": "nombre-miembro",
+                  "label": "Nombre del Nuevo Miembro",
+                  "type": "text",
+                  "required": true,
+                  "endorsementTypeIds": [
+                    "inclusion-miembro"
+                  ]
+                },
+                {
+                  "id": "cedula-miembro",
+                  "label": "Cédula del Nuevo Miembro",
+                  "type": "text",
+                  "required": true,
+                  "endorsementTypeIds": [
+                    "inclusion-miembro"
+                  ]
+                },
+                {
+                  "id": "parentesco-miembro",
+                  "label": "Parentesco",
+                  "type": "select",
+                  "required": true,
+                  "options": [
+                    {
+                      "value": "titular",
+                      "label": "Titular"
+                    },
+                    {
+                      "value": "conyuge",
+                      "label": "Cónyuge"
+                    },
+                    {
+                      "value": "hijo",
+                      "label": "Hijo/a"
+                    }
+                  ],
+                  "endorsementTypeIds": [
+                    "inclusion-miembro"
+                  ]
+                }
+              ],
+              "documentRequirements": [
+                {
+                  "id": "doc-cedula-demo",
+                  "name": "Cédula de Identidad",
+                  "description": "Copia de cédula vigente",
+                  "acceptedFormats": [
+                    "pdf",
+                    "jpg",
+                    "png"
+                  ],
+                  "maxSizeMb": 3,
+                  "mandatory": true,
+                  "endorsementTypeIds": [
+                    "inclusion-miembro",
+                    "cambio-ben-salud"
+                  ]
+                }
+              ],
+              "tariff": {
+                "type": "table",
+                "table": [
+                  {
+                    "id": "s1",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "basico",
+                    "planLabel": "Plan Básico",
+                    "annualPremium": 450,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "s2",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "intermedio",
+                    "planLabel": "Plan Intermedio",
+                    "annualPremium": 780,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "s3",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Individual",
+                    "planCode": "premium",
+                    "planLabel": "Plan Premium",
+                    "annualPremium": 1200,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  }
+                ]
+              },
+              "rules": [
+                {
+                  "id": "r-vig-salud",
+                  "name": "Póliza Vigente",
+                  "description": "Estado activo",
+                  "condition": "policy.status === 'active'",
+                  "conditionLabel": "Estado = Activo",
+                  "failureAction": "block",
+                  "failureMessage": "Póliza no vigente.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "r-mora-salud",
+                  "name": "Sin Mora",
+                  "description": "Sin deuda",
+                  "condition": "policy.debtDays === 0",
+                  "conditionLabel": "Sin mora",
+                  "failureAction": "block",
+                  "failureMessage": "Mora pendiente.",
+                  "severity": "error",
+                  "active": true
+                }
+              ],
+              "endorsementRoutes": [
+                {
+                  "id": "route-salud-bas-int",
+                  "endorsementTypeId": "ampliacion-cobertura-salud",
+                  "sourcePlanCode": "basico",
+                  "targetPlanCode": "intermedio",
+                  "targetPlanLabel": "Plan Intermedio",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                },
+                {
+                  "id": "route-salud-int-pre",
+                  "endorsementTypeId": "ampliacion-cobertura-salud",
+                  "sourcePlanCode": "intermedio",
+                  "targetPlanCode": "premium",
+                  "targetPlanLabel": "Plan Premium",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "hogar",
+          "name": "Seguro de Hogar",
+          "icon": "Home",
+          "allowedEndorsementTypes": [
+            "reduccion-deducible",
+            "cambio-dir-hogar"
+          ],
+          "products": [
+            {
+              "id": "hogar-std",
+              "name": "Hogar Estándar",
+              "branchCode": "hogar",
+              "dynamicFormSchema": [
+                {
+                  "id": "nueva-dir-hogar",
+                  "label": "Nueva Dirección del Inmueble",
+                  "type": "textarea",
+                  "required": true,
+                  "endorsementTypeIds": [
+                    "cambio-dir-hogar"
+                  ]
+                },
+                {
+                  "id": "estado",
+                  "label": "Estado",
+                  "type": "select",
+                  "required": true,
+                  "options": [
+                    {
+                      "value": "miranda",
+                      "label": "Miranda"
+                    },
+                    {
+                      "value": "carabobo",
+                      "label": "Carabobo"
+                    },
+                    {
+                      "value": "zulia",
+                      "label": "Zulia"
+                    },
+                    {
+                      "value": "dtto-capital",
+                      "label": "Distrito Capital"
+                    }
+                  ],
+                  "endorsementTypeIds": [
+                    "cambio-dir-hogar"
+                  ]
+                }
+              ],
+              "documentRequirements": [],
+              "tariff": {
+                "type": "table",
+                "table": [
+                  {
+                    "id": "h1",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Propietario",
+                    "planCode": "basico",
+                    "planLabel": "Hogar Básico",
+                    "annualPremium": 320,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "h2",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Propietario",
+                    "planCode": "estandar",
+                    "planLabel": "Hogar Estándar",
+                    "annualPremium": 580,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  },
+                  {
+                    "id": "h3",
+                    "segmentCode": "individual",
+                    "segmentLabel": "Propietario",
+                    "planCode": "premium",
+                    "planLabel": "Hogar Premium",
+                    "annualPremium": 950,
+                    "currency": "USD",
+                    "effectiveFrom": "2025-01-01"
+                  }
+                ]
+              },
+              "rules": [
+                {
+                  "id": "r-vig-hogar",
+                  "name": "Póliza Vigente",
+                  "description": "Estado activo",
+                  "condition": "policy.status === 'active'",
+                  "conditionLabel": "Estado = Activo",
+                  "failureAction": "block",
+                  "failureMessage": "Póliza no vigente.",
+                  "severity": "error",
+                  "active": true
+                },
+                {
+                  "id": "r-siniestros-hogar",
+                  "name": "Sin Siniestros Activos",
+                  "description": "No siniestros abiertos",
+                  "condition": "policy.openClaims === 0",
+                  "conditionLabel": "Sin siniestros abiertos",
+                  "failureAction": "send-to-approval",
+                  "failureMessage": "Siniestros abiertos — requiere aprobación.",
+                  "severity": "warning",
+                  "active": true
+                }
+              ],
+              "endorsementRoutes": [
+                {
+                  "id": "route-hogar-bas-est",
+                  "endorsementTypeId": "reduccion-deducible",
+                  "sourcePlanCode": "basico",
+                  "targetPlanCode": "estandar",
+                  "targetPlanLabel": "Hogar Estándar (deducible reducido)",
+                  "prorateMethod": "days-remaining",
+                  "allowedChannels": [
+                    "backoffice",
+                    "api"
+                  ],
+                  "requiresApproval": false,
+                  "taxRules": [
+                    {
+                      "name": "IVA",
+                      "type": "percentage",
+                      "value": 16,
+                      "appliesTo": "difference"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "demoPortfolios": [
+        {
+          "policyId": "DEMO-SAL-001",
+          "insuredName": "Fernando Castro",
+          "productId": "salud-col",
+          "productName": "Salud Colectiva",
+          "branchCode": "salud",
+          "planCode": "basico",
+          "planLabel": "Plan Básico",
+          "segmentCode": "individual",
+          "segmentLabel": "Individual",
+          "sumInsured": 50000,
+          "startDate": "2025-02-01",
+          "endDate": "2026-02-01",
+          "daysRemaining": 211,
+          "annualPremium": 450,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "DEMO-SAL-002",
+          "insuredName": "Patricia Vargas",
+          "productId": "salud-col",
+          "productName": "Salud Colectiva",
+          "branchCode": "salud",
+          "planCode": "basico",
+          "planLabel": "Plan Básico",
+          "segmentCode": "individual",
+          "segmentLabel": "Individual",
+          "sumInsured": 50000,
+          "startDate": "2025-01-01",
+          "endDate": "2026-01-01",
+          "daysRemaining": 180,
+          "annualPremium": 450,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "DEMO-HOG-001",
+          "insuredName": "Miguel Torres",
+          "productId": "hogar-std",
+          "productName": "Hogar Estándar",
+          "branchCode": "hogar",
+          "planCode": "basico",
+          "planLabel": "Hogar Básico",
+          "segmentCode": "individual",
+          "segmentLabel": "Propietario",
+          "sumInsured": 80000,
+          "startDate": "2025-03-01",
+          "endDate": "2026-03-01",
+          "daysRemaining": 239,
+          "annualPremium": 320,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "DEMO-HOG-002",
+          "insuredName": "Sandra Mendoza",
+          "productId": "hogar-std",
+          "productName": "Hogar Estándar",
+          "branchCode": "hogar",
+          "planCode": "basico",
+          "planLabel": "Hogar Básico",
+          "segmentCode": "individual",
+          "segmentLabel": "Propietario",
+          "sumInsured": 80000,
+          "startDate": "2024-10-01",
+          "endDate": "2025-10-01",
+          "daysRemaining": 88,
+          "annualPremium": 320,
+          "status": "active",
+          "debtDays": 15,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "DEMO-SAL-003",
+          "insuredName": "Ricardo Blanco",
+          "productId": "salud-col",
+          "productName": "Salud Colectiva",
+          "branchCode": "salud",
+          "planCode": "intermedio",
+          "planLabel": "Plan Intermedio",
+          "segmentCode": "individual",
+          "segmentLabel": "Individual",
+          "sumInsured": 50000,
+          "startDate": "2025-05-01",
+          "endDate": "2026-05-01",
+          "daysRemaining": 300,
+          "annualPremium": 780,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 1,
+          "currency": "USD"
+        },
+        {
+          "policyId": "DEMO-HOG-003",
+          "insuredName": "Laura Díaz",
+          "productId": "hogar-std",
+          "productName": "Hogar Estándar",
+          "branchCode": "hogar",
+          "planCode": "basico",
+          "planLabel": "Hogar Básico",
+          "segmentCode": "individual",
+          "segmentLabel": "Propietario",
+          "sumInsured": 80000,
+          "startDate": "2025-06-01",
+          "endDate": "2026-06-01",
+          "daysRemaining": 361,
+          "annualPremium": 320,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "DEMO-SAL-004",
+          "insuredName": "Jorge Morales",
+          "productId": "salud-col",
+          "productName": "Salud Colectiva",
+          "branchCode": "salud",
+          "planCode": "basico",
+          "planLabel": "Plan Básico",
+          "segmentCode": "individual",
+          "segmentLabel": "Individual",
+          "sumInsured": 50000,
+          "startDate": "2024-08-01",
+          "endDate": "2025-08-01",
+          "daysRemaining": 57,
+          "annualPremium": 450,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        },
+        {
+          "policyId": "DEMO-SAL-005",
+          "insuredName": "Elena Suárez",
+          "productId": "salud-col",
+          "productName": "Salud Colectiva",
+          "branchCode": "salud",
+          "planCode": "basico",
+          "planLabel": "Plan Básico",
+          "segmentCode": "individual",
+          "segmentLabel": "Individual",
+          "sumInsured": 50000,
+          "startDate": "2025-04-15",
+          "endDate": "2026-04-15",
+          "daysRemaining": 284,
+          "annualPremium": 450,
+          "status": "active",
+          "debtDays": 0,
+          "openClaims": 0,
+          "currency": "USD"
+        }
+      ]
+    }
+  ]
+}

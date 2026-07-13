@@ -9,7 +9,12 @@
 // filtrando siempre por tenantId en el código, más el RLS de PostgreSQL.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 /**
@@ -24,7 +29,10 @@ import { PrismaClient } from '@prisma/client';
  * El tenantId se almacena en memoria por request y es usado por los repositorios.
  */
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
 
   /** Almacena el tenant activo para la request actual */
@@ -33,9 +41,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   constructor() {
     super({
       log:
-        process.env.NODE_ENV === 'development'
-          ? ['warn', 'error']
-          : ['error'],
+        process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
     });
   }
 
@@ -74,7 +80,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * @returns El valor retornado por la función
    */
   async withTransaction<T>(
-    fn: (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => Promise<T>,
+    fn: (
+      tx: Omit<
+        PrismaClient,
+        | '$connect'
+        | '$disconnect'
+        | '$on'
+        | '$transaction'
+        | '$use'
+        | '$extends'
+      >,
+    ) => Promise<T>,
   ): Promise<T> {
     return this.$transaction(fn);
   }

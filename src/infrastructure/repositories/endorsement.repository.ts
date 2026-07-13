@@ -60,7 +60,9 @@ export class EndorsementRepository implements IEndorsementRepository {
       tenantId,
       ...(filters.policyId && { policyId: filters.policyId }),
       ...(filters.status && { status: filters.status as any }),
-      ...(filters.endorsementTypeId && { endorsementTypeId: filters.endorsementTypeId }),
+      ...(filters.endorsementTypeId && {
+        endorsementTypeId: filters.endorsementTypeId,
+      }),
     };
 
     const [records, total] = await Promise.all([
@@ -82,7 +84,10 @@ export class EndorsementRepository implements IEndorsementRepository {
     };
   }
 
-  async save(endorsement: Endorsement, tx?: PrismaTransaction): Promise<Endorsement> {
+  async save(
+    endorsement: Endorsement,
+    tx?: PrismaTransaction,
+  ): Promise<Endorsement> {
     const client = tx ?? this.prisma;
     const data = this.toPrisma(endorsement);
 
@@ -90,7 +95,10 @@ export class EndorsementRepository implements IEndorsementRepository {
     return this.toDomain(record);
   }
 
-  async update(endorsement: Endorsement, tx?: PrismaTransaction): Promise<Endorsement> {
+  async update(
+    endorsement: Endorsement,
+    tx?: PrismaTransaction,
+  ): Promise<Endorsement> {
     const client = tx ?? this.prisma;
     const { id, tenantId, createdAt, ...data } = this.toPrisma(endorsement);
 
@@ -101,7 +109,10 @@ export class EndorsementRepository implements IEndorsementRepository {
     return this.toDomain(record);
   }
 
-  async generateEndorsementNumber(tenantId: string, tx?: PrismaTransaction): Promise<string> {
+  async generateEndorsementNumber(
+    tenantId: string,
+    tx?: PrismaTransaction,
+  ): Promise<string> {
     const client = tx ?? this.prisma;
     const year = new Date().getFullYear();
 
@@ -132,7 +143,7 @@ export class EndorsementRepository implements IEndorsementRepository {
     let dbEmittedCount = 0;
     let dbRejectedCount = 0;
     let dbPendingApprovalCount = 0;
-    let dbTotalCount = endorsements.length;
+    const dbTotalCount = endorsements.length;
 
     let rcvCount = 0;
     let cascoCount = 0;
@@ -153,7 +164,10 @@ export class EndorsementRepository implements IEndorsementRepository {
         dbEmittedCount++;
       } else if (end.status === 'REJECTED') {
         dbRejectedCount++;
-      } else if (end.status === 'PENDING_APPROVAL' || end.status === 'PENDING_PAYMENT') {
+      } else if (
+        end.status === 'PENDING_APPROVAL' ||
+        end.status === 'PENDING_PAYMENT'
+      ) {
         dbPendingApprovalCount++;
       }
 
@@ -175,13 +189,17 @@ export class EndorsementRepository implements IEndorsementRepository {
       // Mapear actividad reciente
       const formData = end.formData as any;
       const insuredName = formData?.insuredName || 'Cliente Asegurado';
-      
-      let typeLabel = 'Modificación de Póliza';
-      if (end.endorsementTypeId === 'ampliacion-plan') typeLabel = 'Ampliación Plan';
-      else if (end.endorsementTypeId === 'inclusion-cobertura') typeLabel = 'Inclusión Cobertura';
-      else if (end.endorsementTypeId === 'aumento-suma') typeLabel = 'Aumento Suma Asegurada';
 
-      let statusLabel: 'approved' | 'blocked' | 'requires-approval' = 'requires-approval';
+      let typeLabel = 'Modificación de Póliza';
+      if (end.endorsementTypeId === 'ampliacion-plan')
+        typeLabel = 'Ampliación Plan';
+      else if (end.endorsementTypeId === 'inclusion-cobertura')
+        typeLabel = 'Inclusión Cobertura';
+      else if (end.endorsementTypeId === 'aumento-suma')
+        typeLabel = 'Aumento Suma Asegurada';
+
+      let statusLabel: 'approved' | 'blocked' | 'requires-approval' =
+        'requires-approval';
       let msgLabel = 'Pendiente de Pago';
       if (end.status === 'EMITTED') {
         statusLabel = 'approved';
@@ -195,7 +213,10 @@ export class EndorsementRepository implements IEndorsementRepository {
       }
 
       const targetPlanClean = calc?.targetPlan?.trim();
-      const planSuffix = targetPlanClean && targetPlanClean !== 'Core' ? ` (${targetPlanClean})` : '';
+      const planSuffix =
+        targetPlanClean && targetPlanClean !== 'Core'
+          ? ` (${targetPlanClean})`
+          : '';
 
       recentActivity.push({
         name: insuredName,
@@ -213,15 +234,19 @@ export class EndorsementRepository implements IEndorsementRepository {
     const totalRejected = dbRejectedCount;
     const totalAudit = dbPendingApprovalCount;
 
-    const autoApprovalRate = totalTransactions > 0 ? (totalAutoApproved / totalTransactions) * 100 : 0;
-    const rejectionRate = totalTransactions > 0 ? (totalRejected / totalTransactions) * 100 : 0;
-    const auditDeviationRate = totalTransactions > 0 ? (totalAudit / totalTransactions) * 100 : 0;
+    const autoApprovalRate =
+      totalTransactions > 0 ? (totalAutoApproved / totalTransactions) * 100 : 0;
+    const rejectionRate =
+      totalTransactions > 0 ? (totalRejected / totalTransactions) * 100 : 0;
+    const auditDeviationRate =
+      totalTransactions > 0 ? (totalAudit / totalTransactions) * 100 : 0;
 
     // Ramos
     const totalRcv = rcvCount;
     const totalCasco = cascoCount;
     const totalBranch = totalRcv + totalCasco;
-    const rcvPct = totalBranch > 0 ? Math.round((totalRcv / totalBranch) * 100) : 0;
+    const rcvPct =
+      totalBranch > 0 ? Math.round((totalRcv / totalBranch) * 100) : 0;
     const cascoPct = totalBranch > 0 ? 100 - rcvPct : 0;
 
     // Canales
@@ -232,10 +257,27 @@ export class EndorsementRepository implements IEndorsementRepository {
     const totalChan = totalBackoffice + totalPortal + totalWhatsapp + totalApi;
 
     const chanDistribution = [
-      { name: 'Backoffice (Interno)', pct: totalChan > 0 ? Math.round((totalBackoffice / totalChan) * 100) : 0, color: 'var(--color-primary)' },
-      { name: 'Portal de Clientes', pct: totalChan > 0 ? Math.round((totalPortal / totalChan) * 100) : 0, color: 'var(--color-success)' },
-      { name: 'WhatsApp Bot', pct: totalChan > 0 ? Math.round((totalWhatsapp / totalChan) * 100) : 0, color: 'var(--color-accent)' },
-      { name: 'API de Corredores', pct: totalChan > 0 ? Math.round((totalApi / totalChan) * 100) : 0, color: 'var(--color-neutral)' },
+      {
+        name: 'Backoffice (Interno)',
+        pct:
+          totalChan > 0 ? Math.round((totalBackoffice / totalChan) * 100) : 0,
+        color: 'var(--color-primary)',
+      },
+      {
+        name: 'Portal de Clientes',
+        pct: totalChan > 0 ? Math.round((totalPortal / totalChan) * 100) : 0,
+        color: 'var(--color-success)',
+      },
+      {
+        name: 'WhatsApp Bot',
+        pct: totalChan > 0 ? Math.round((totalWhatsapp / totalChan) * 100) : 0,
+        color: 'var(--color-accent)',
+      },
+      {
+        name: 'API de Corredores',
+        pct: totalChan > 0 ? Math.round((totalApi / totalChan) * 100) : 0,
+        color: 'var(--color-neutral)',
+      },
     ];
 
     const finalActivities = recentActivity.slice(0, 6);
@@ -248,7 +290,7 @@ export class EndorsementRepository implements IEndorsementRepository {
       auditDeviationRate,
       branchDistribution: [
         { name: 'RCV Automóvil', pct: rcvPct },
-        { name: 'Casco Automóvil', pct: cascoPct }
+        { name: 'Casco Automóvil', pct: cascoPct },
       ],
       channelDistribution: chanDistribution,
       recentActivity: finalActivities,
@@ -282,7 +324,7 @@ export class EndorsementRepository implements IEndorsementRepository {
   // ─── Mapper: Domain Entity → Prisma Data ──────────────────────────────────
 
   private toPrisma(endorsement: Endorsement): any {
-    const props = endorsement.toPlainObject() as EndorsementProps;
+    const props = endorsement.toPlainObject();
     return {
       id: props.id,
       tenantId: props.tenantId,

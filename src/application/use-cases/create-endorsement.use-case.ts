@@ -14,10 +14,19 @@
 //   La lógica vive en los servicios de dominio y en la entidad Endorsement.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Injectable, Inject, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import type { CreateEndorsementDto } from '../dtos/create-endorsement.dto';
-import { Endorsement, EndorsementStatus } from '../../domain/entities/endorsement.entity';
+import {
+  Endorsement,
+  EndorsementStatus,
+} from '../../domain/entities/endorsement.entity';
 import type { EndorsementCalculation } from '../../domain/entities/endorsement.entity';
 import { RuleEngineService } from '../../domain/services/rule-engine.service';
 import { CalculationEngineService } from '../../domain/services/calculation-engine.service';
@@ -49,10 +58,15 @@ export class CreateEndorsementUseCase {
     private readonly ruleEngine: RuleEngineService,
     private readonly calculationEngine: CalculationEngineService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
-  async execute(tenantId: string, dto: CreateEndorsementDto): Promise<Endorsement> {
-    this.logger.log(`Creating endorsement for tenant=${tenantId}, policy=${dto.policyId}`);
+  async execute(
+    tenantId: string,
+    dto: CreateEndorsementDto,
+  ): Promise<Endorsement> {
+    this.logger.log(
+      `Creating endorsement for tenant=${tenantId}, policy=${dto.policyId}`,
+    );
 
     // ─── 1. Consultar póliza al Core ──────────────────────────────────────
     const policy = await this.policyPort.findByPolicyId(tenantId, dto.policyId);
@@ -62,7 +76,7 @@ export class CreateEndorsementUseCase {
 
     if (policy.status !== 'active') {
       throw new BadRequestException(
-        `La póliza "${dto.policyId}" no está activa. Estado: ${policy.status}`
+        `La póliza "${dto.policyId}" no está activa. Estado: ${policy.status}`,
       );
     }
 
@@ -75,7 +89,7 @@ export class CreateEndorsementUseCase {
     );
     if (!endorsementType) {
       throw new BadRequestException(
-        `Tipo de endoso "${dto.endorsementTypeId}" no configurado para este tenant`
+        `Tipo de endoso "${dto.endorsementTypeId}" no configurado para este tenant`,
       );
     }
 
@@ -85,7 +99,7 @@ export class CreateEndorsementUseCase {
     );
     if (!channel) {
       throw new BadRequestException(
-        `Canal "${dto.channelId}" no configurado para este tenant`
+        `Canal "${dto.channelId}" no configurado para este tenant`,
       );
     }
 
@@ -105,18 +119,22 @@ export class CreateEndorsementUseCase {
     );
 
     if (availability.status === 'blocked') {
-      const reasons = availability.blockingRules.map((r) => r.message).join('; ');
+      const reasons = availability.blockingRules
+        .map((r) => r.message)
+        .join('; ');
       throw new BadRequestException(`Endoso bloqueado por reglas: ${reasons}`);
     }
 
     if (availability.status === 'channel-disabled') {
       throw new BadRequestException(
-        `El canal "${dto.channelId}" no permite este tipo de endoso`
+        `El canal "${dto.channelId}" no permite este tipo de endoso`,
       );
     }
 
-    const appliedRuleIds = [...availability.blockingRules, ...availability.warningRules]
-      .map((r) => r.ruleId);
+    const appliedRuleIds = [
+      ...availability.blockingRules,
+      ...availability.warningRules,
+    ].map((r) => r.ruleId);
 
     // ─── 4. Calcular costo (para endosos cuantitativos con ruta) ─────────
     let calculation: EndorsementCalculation | undefined;
@@ -137,17 +155,17 @@ export class CreateEndorsementUseCase {
           targetPlanCode,
           targetPlanLabel: targetPlanCode,
           allowedChannels: ['backoffice'],
-          prorateMethod: 'days-remaining'
+          prorateMethod: 'days-remaining',
         };
       }
 
       if (!route) {
         throw new BadRequestException(
-          `Ruta de endoso "${dto.routeId}" no encontrada en el producto`
+          `Ruta de endoso "${dto.routeId}" no encontrada en el producto`,
         );
       }
 
-      let targetPremium = this.calculationEngine.getPremiumFromTariff(
+      const targetPremium = this.calculationEngine.getPremiumFromTariff(
         product.tariff,
         route.targetPlanCode,
         policy.segmentCode,
@@ -155,7 +173,7 @@ export class CreateEndorsementUseCase {
 
       if (targetPremium === 0) {
         throw new BadRequestException(
-          `No existe configuración de tarifa para el plan "${route.targetPlanCode}" y segmento "${policy.segmentCode}"`
+          `No existe configuración de tarifa para el plan "${route.targetPlanCode}" y segmento "${policy.segmentCode}"`,
         );
       }
 
@@ -178,9 +196,10 @@ export class CreateEndorsementUseCase {
         adminFee: calcResult.adminFee,
         totalCharge: calcResult.totalCharge,
         formula: calcResult.formula,
-      } as EndorsementCalculation;
+      };
 
-      requiresPayment = calculation.totalCharge > 0 && endorsementType.requiresPayment;
+      requiresPayment =
+        calculation.totalCharge > 0 && endorsementType.requiresPayment;
     }
 
     // ─── 5. Persistir en transacción atómica ─────────────────────────────
@@ -223,10 +242,8 @@ export class CreateEndorsementUseCase {
         newEndorsement.markAsPendingPayment(calculation);
       } else {
         // Emitir directamente (sin pago ni aprobación requerida)
-        const endorsementNumber = await this.endorsementRepo.generateEndorsementNumber(
-          tenantId,
-          tx,
-        );
+        const endorsementNumber =
+          await this.endorsementRepo.generateEndorsementNumber(tenantId, tx);
         newEndorsement.emit(endorsementNumber);
       }
 
@@ -261,7 +278,11 @@ export class CreateEndorsementUseCase {
 
     if (isReadyForCore && calculation && dto.routeId) {
       try {
-        await this.processCoreIntegration(policy, calculation, dto.effectiveDate);
+        await this.processCoreIntegration(
+          policy,
+          calculation,
+          dto.effectiveDate,
+        );
       } catch (err) {
         this.logger.error(`Error during Core integration: ${err.message}`);
         throw err;
@@ -269,7 +290,7 @@ export class CreateEndorsementUseCase {
     }
 
     this.logger.log(
-      `Endorsement created: id=${endorsement.id}, status=${endorsement.status}`
+      `Endorsement created: id=${endorsement.id}, status=${endorsement.status}`,
     );
 
     return endorsement;
@@ -292,26 +313,33 @@ export class CreateEndorsementUseCase {
 
     // 1. Anular recibos pendientes si existen
     if (pendingReceipts.length > 0) {
-      this.logger.log(`Voiding pending receipts in Core: ${pendingReceipts.join(', ')}`);
-      const anularRes = await fetch(`${CORE_API_BASE_URL}/api/v1/changes/anularRecibos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cnpoliza: (policy as any).cnpoliza || policy.policyId,
-          recibos: pendingReceipts,
-          fanulacion: effectiveDate,
-          cusuario: 7,
-        }),
-      });
+      this.logger.log(
+        `Voiding pending receipts in Core: ${pendingReceipts.join(', ')}`,
+      );
+      const anularRes = await fetch(
+        `${CORE_API_BASE_URL}/api/v1/changes/anularRecibos`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cnpoliza: policy.cnpoliza || policy.policyId,
+            recibos: pendingReceipts,
+            fanulacion: effectiveDate,
+            cusuario: 7,
+          }),
+        },
+      );
 
       if (!anularRes.ok) {
         const errText = await anularRes.text();
-        throw new BadRequestException(`Fallo al anular recibos en el Core: ${errText}`);
+        throw new BadRequestException(
+          `Fallo al anular recibos en el Core: ${errText}`,
+        );
       }
     }
 
-    let fanopoliza = (policy as any).fanopoliza;
-    let fmespoliza = (policy as any).fmespoliza;
+    let fanopoliza = policy.fanopoliza;
+    let fmespoliza = policy.fmespoliza;
     if ((!fanopoliza || !fmespoliza) && policy.policyId.includes('-')) {
       const parts = policy.policyId.split('-');
       if (parts.length === 3) {
@@ -321,25 +349,32 @@ export class CreateEndorsementUseCase {
     }
 
     // 2. Crear el nuevo recibo con la prima calculada
-    this.logger.log(`Creating new receipt in Core for premium: ${calculation.targetPremium}`);
-    const crearRes = await fetch(`${CORE_API_BASE_URL}/api/v1/endoso-recibos/crearRecibo`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cnpoliza: (policy as any).cnpoliza || policy.policyId,
-        fanopoliza,
-        fmespoliza,
-        mprima: calculation.targetPremium,
-        fdesde: effectiveDate,
-        fhasta: policy.endDate,
-        cusuario: 7,
-        cplan: calculation.targetPlan,
-      }),
-    });
+    this.logger.log(
+      `Creating new receipt in Core for premium: ${calculation.targetPremium}`,
+    );
+    const crearRes = await fetch(
+      `${CORE_API_BASE_URL}/api/v1/endoso-recibos/crearRecibo`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cnpoliza: policy.cnpoliza || policy.policyId,
+          fanopoliza,
+          fmespoliza,
+          mprima: calculation.targetPremium,
+          fdesde: effectiveDate,
+          fhasta: policy.endDate,
+          cusuario: 7,
+          cplan: calculation.targetPlan,
+        }),
+      },
+    );
 
     if (!crearRes.ok) {
       const errText = await crearRes.text();
-      throw new BadRequestException(`Fallo al crear el recibo en el Core: ${errText}`);
+      throw new BadRequestException(
+        `Fallo al crear el recibo en el Core: ${errText}`,
+      );
     }
   }
 }

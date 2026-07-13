@@ -85,7 +85,10 @@ Este motor implementa arquitectura hexagonal (Ports & Adapters):
       )
       .addTag('Endosos', 'Operaciones de emisión y consulta de endosos')
       .addTag('Pólizas', 'Consulta de pólizas al Core del asegurador')
-      .addTag('Configuración de Tenants', 'Gestión de la configuración por aseguradora')
+      .addTag(
+        'Configuración de Tenants',
+        'Gestión de la configuración por aseguradora',
+      )
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
@@ -97,11 +100,15 @@ Este motor implementa arquitectura hexagonal (Ports & Adapters):
       },
     });
 
-    logger.log(`Swagger UI disponible en: http://localhost:${port}/${swaggerPath}`);
+    logger.log(
+      `Swagger UI disponible en: http://localhost:${port}/${swaggerPath}`,
+    );
   }
 
   await app.listen(port);
-  logger.log(`Motor Universal de Endosos corriendo en: http://localhost:${port}`);
+  logger.log(
+    `Motor Universal de Endosos corriendo en: http://localhost:${port}`,
+  );
   logger.log(`API base: http://localhost:${port}/api`);
 }
 

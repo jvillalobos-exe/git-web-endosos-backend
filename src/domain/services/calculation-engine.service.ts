@@ -40,7 +40,8 @@ export interface EndorsementRouteConfig {
   sourcePlanCode: string;
   targetPlanCode: string;
   targetPlanLabel: string;
-  prorateMethod: 'days-remaining' | 'full-difference' | 'fixed-fee' | 'no-charge';
+  prorateMethod:
+    'days-remaining' | 'full-difference' | 'fixed-fee' | 'no-charge';
   prorateFormula?: string;
   fixedFee?: number;
   taxRules: TaxRuleConfig[];
@@ -118,9 +119,12 @@ export class CalculationEngineService {
     policy: PolicySnapshot,
     targetPremium: number,
   ): EndorsementCalculationResult {
-    const hasPaidReceipts = policy.recibos && Array.isArray(policy.recibos) && policy.recibos.length > 0
-      ? policy.recibos.some((r: any) => r.Status_Rec === 'Cobrado')
-      : true;
+    const hasPaidReceipts =
+      policy.recibos &&
+      Array.isArray(policy.recibos) &&
+      policy.recibos.length > 0
+        ? policy.recibos.some((r: any) => r.Status_Rec === 'Cobrado')
+        : true;
 
     const currentPremium = hasPaidReceipts ? policy.annualPremium : 0;
     const daysRemaining = Math.max(0, policy.daysRemaining);

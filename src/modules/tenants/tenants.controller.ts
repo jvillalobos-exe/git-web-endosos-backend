@@ -13,7 +13,14 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiHeader,
+  ApiBody,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { TenantConfigRepository } from '../../infrastructure/repositories/tenant-config.repository';
@@ -51,7 +58,10 @@ Incluye: endorsementTypes, branches, workflows, channels, auditSchema, etc.
     `,
   })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
-  @ApiResponse({ status: 200, description: 'Configuración del tenant (InsurerConfig)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Configuración del tenant (InsurerConfig)',
+  })
   @ApiResponse({ status: 404, description: 'Configuración no encontrada' })
   async getConfig(
     @Param('id') id: string,

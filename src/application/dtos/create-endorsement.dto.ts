@@ -18,7 +18,6 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-
 /**
  * @class CreateEndorsementDto
  * @description Datos requeridos para iniciar el proceso de emisión de un endoso.
@@ -77,12 +76,16 @@ export class CreateEndorsementDto {
     example: '2025-01-15',
     format: 'date',
   })
-  @IsDateString({}, { message: 'La fecha efectiva debe ser una fecha válida (YYYY-MM-DD)' })
+  @IsDateString(
+    {},
+    { message: 'La fecha efectiva debe ser una fecha válida (YYYY-MM-DD)' },
+  )
   @IsNotEmpty()
   effectiveDate: string;
 
   @ApiPropertyOptional({
-    description: 'Datos del formulario dinámico. Campos según el tipo de endoso.',
+    description:
+      'Datos del formulario dinámico. Campos según el tipo de endoso.',
     example: { newPlanCode: 'PLATA', reason: 'Mejora de cobertura' },
   })
   @IsOptional()
@@ -118,12 +121,18 @@ export class CalculateEndorsementDto {
   @IsNotEmpty()
   policyId: string;
 
-  @ApiProperty({ description: 'ID de la ruta de endoso', example: 'route-basic-to-plata' })
+  @ApiProperty({
+    description: 'ID de la ruta de endoso',
+    example: 'route-basic-to-plata',
+  })
   @IsString()
   @IsNotEmpty()
   routeId: string;
 
-  @ApiProperty({ description: 'Fecha efectiva del endoso', example: '2025-01-15' })
+  @ApiProperty({
+    description: 'Fecha efectiva del endoso',
+    example: '2025-01-15',
+  })
   @IsDateString()
   effectiveDate: string;
 }

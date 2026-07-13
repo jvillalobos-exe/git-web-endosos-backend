@@ -83,7 +83,10 @@ export class RuleEngineService {
    * @param context   - Variables disponibles en la expresión
    * @returns `true` si la regla se cumple (póliza es elegible)
    */
-  evaluateCondition(condition: string, context: Record<string, unknown>): boolean {
+  evaluateCondition(
+    condition: string,
+    context: Record<string, unknown>,
+  ): boolean {
     try {
       const keys = Object.keys(context);
       const values = Object.values(context);
@@ -151,7 +154,9 @@ export class RuleEngineService {
       };
     }
 
-    const channelAllowsFamily = channel.allowedEndorsementFamilies.includes(endorsementType.family);
+    const channelAllowsFamily = channel.allowedEndorsementFamilies.includes(
+      endorsementType.family,
+    );
     const channelAllowsType =
       channel.allowedEndorsementTypeIds.length === 0 ||
       channel.allowedEndorsementTypeIds.includes(endorsementType.id);
@@ -167,9 +172,12 @@ export class RuleEngineService {
 
     // 2. Evaluar reglas de elegibilidad
     const evaluations = this.evaluateRules(rules, policy);
-    const blockingRules = evaluations.filter((e) => !e.passed && e.action === 'block');
+    const blockingRules = evaluations.filter(
+      (e) => !e.passed && e.action === 'block',
+    );
     const warningRules = evaluations.filter(
-      (e) => !e.passed && (e.action === 'warn' || e.action === 'send-to-approval'),
+      (e) =>
+        !e.passed && (e.action === 'warn' || e.action === 'send-to-approval'),
     );
 
     const needsApproval =
@@ -180,12 +188,20 @@ export class RuleEngineService {
     let status: EndorsementAvailability['status'];
     if (blockingRules.length > 0) {
       status = 'blocked';
-    } else if (needsApproval || warningRules.some((e) => e.action === 'send-to-approval')) {
+    } else if (
+      needsApproval ||
+      warningRules.some((e) => e.action === 'send-to-approval')
+    ) {
       status = 'requires-approval';
     } else {
       status = 'available';
     }
 
-    return { endorsementTypeId: endorsementType.id, status, blockingRules, warningRules };
+    return {
+      endorsementTypeId: endorsementType.id,
+      status,
+      blockingRules,
+      warningRules,
+    };
   }
 }

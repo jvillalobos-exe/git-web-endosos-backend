@@ -3,8 +3,25 @@
 // Expone el puerto IPolicyPort al frontend.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiHeader, ApiQuery, ApiBody } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiHeader,
+  ApiQuery,
+  ApiBody,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { QueryPolicyUseCase } from '../../application/use-cases/query-policy.use-case';
@@ -18,7 +35,7 @@ import { QueryPolicyUseCase } from '../../application/use-cases/query-policy.use
 @UseGuards(TenantGuard)
 @Controller('policies')
 export class PoliciesController {
-  constructor(private readonly queryPolicyUseCase: QueryPolicyUseCase) { }
+  constructor(private readonly queryPolicyUseCase: QueryPolicyUseCase) {}
 
   @Get(':policyId')
   @ApiOperation({
@@ -57,12 +74,29 @@ La respuesta es un PolicySnapshot normalizado al formato del Motor.
   @Get()
   @ApiOperation({
     summary: 'Listar pólizas del portfolio',
-    description: 'Busca pólizas con filtros opcionales (para el módulo Portfolio/Lotes).',
+    description:
+      'Busca pólizas con filtros opcionales (para el módulo Portfolio/Lotes).',
   })
-  @ApiQuery({ name: 'insuredName', required: false, description: 'Filtrar por nombre del asegurado' })
-  @ApiQuery({ name: 'branchCode', required: false, description: 'Filtrar por ramo (AUTO, VIDA, etc.)' })
-  @ApiQuery({ name: 'status', required: false, enum: ['active', 'expired', 'suspended', 'cancelled'] })
-  @ApiQuery({ name: 'cedula', required: false, description: 'Filtrar por cédula del asegurado' })
+  @ApiQuery({
+    name: 'insuredName',
+    required: false,
+    description: 'Filtrar por nombre del asegurado',
+  })
+  @ApiQuery({
+    name: 'branchCode',
+    required: false,
+    description: 'Filtrar por ramo (AUTO, VIDA, etc.)',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['active', 'expired', 'suspended', 'cancelled'],
+  })
+  @ApiQuery({
+    name: 'cedula',
+    required: false,
+    description: 'Filtrar por cédula del asegurado',
+  })
   @ApiResponse({ status: 200, description: 'Lista de pólizas' })
   async findMany(
     @Req() req: Request & { tenantId: string },
@@ -84,7 +118,8 @@ La respuesta es un PolicySnapshot normalizado al formato del Motor.
   @Post('planes')
   @ApiOperation({
     summary: 'Consultar catálogo de planes de la API externa',
-    description: 'Consulta los planes disponibles en el Core de La Mundial de Seguros.',
+    description:
+      'Consulta los planes disponibles en el Core de La Mundial de Seguros.',
   })
   @ApiBody({
     schema: {
@@ -99,9 +134,7 @@ La respuesta es un PolicySnapshot normalizado al formato del Motor.
     },
   })
   @ApiResponse({ status: 200, description: 'Listado de planes del Core' })
-  async getPlanes(
-    @Body() body: any,
-  ) {
+  async getPlanes(@Body() body: any) {
     return this.queryPolicyUseCase.getPlanes(body);
   }
 }

@@ -1,14 +1,21 @@
 const { PrismaClient } = require('@prisma/client');
-const { INITIAL_CONFIG } = require('../../git-web-endosos-frontend/src/data/seedData');
+const fs = require('fs');
+const path = require('path');
 
 const prisma = new PrismaClient();
 
 async function main() {
+  const seedConfigPath = path.join(__dirname, 'seedConfig.json');
+  if (!fs.existsSync(seedConfigPath)) {
+    throw new Error('Archivo seedConfig.json no encontrado. Asegúrese de haberlo generado.');
+  }
+
+  const INITIAL_CONFIG = JSON.parse(fs.readFileSync(seedConfigPath, 'utf8'));
   const tenantId = 'a1b2c3d4-e5f6-4789-abcd-ef1234567890';
   const laMundialConfig = INITIAL_CONFIG.insurers.find((ins) => ins.id === 'la-mundial');
 
   if (!laMundialConfig) {
-    throw new Error('Configuración de La Mundial de Seguros no encontrada en seedData del frontend.');
+    throw new Error('Configuración de La Mundial de Seguros no encontrada en seedConfig.json.');
   }
 
   console.log('Iniciando carga de semilla de base de datos...');

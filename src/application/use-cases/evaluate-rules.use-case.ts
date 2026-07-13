@@ -7,7 +7,10 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import type { IPolicyPort } from '../../domain/ports/policy.port';
 import { POLICY_PORT_TOKEN } from '../../domain/ports/policy.port';
-import { RuleEngineService, EndorsementAvailability } from '../../domain/services/rule-engine.service';
+import {
+  RuleEngineService,
+  EndorsementAvailability,
+} from '../../domain/services/rule-engine.service';
 import { TenantConfigRepository } from '../../infrastructure/repositories/tenant-config.repository';
 
 export interface EvaluateRulesResult {
