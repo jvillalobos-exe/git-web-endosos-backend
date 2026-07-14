@@ -63,6 +63,30 @@ export class EndorsementRepository implements IEndorsementRepository {
       ...(filters.endorsementTypeId && {
         endorsementTypeId: filters.endorsementTypeId,
       }),
+      ...(filters.search && {
+        OR: [
+          { endorsementNumber: { contains: filters.search, mode: 'insensitive' } },
+          { policyId: { contains: filters.search, mode: 'insensitive' } },
+          {
+            formData: {
+              path: ['insuredName'],
+              string_contains: filters.search,
+            },
+          },
+          {
+            formData: {
+              path: ['insuredName'],
+              string_contains: filters.search.toUpperCase(),
+            },
+          },
+          {
+            formData: {
+              path: ['insuredName'],
+              string_contains: filters.search.toLowerCase(),
+            },
+          },
+        ],
+      }),
     };
 
     const [records, total] = await Promise.all([
@@ -143,6 +167,7 @@ export class EndorsementRepository implements IEndorsementRepository {
     let dbEmittedCount = 0;
     let dbRejectedCount = 0;
     let dbPendingApprovalCount = 0;
+    let dbPendingPaymentCount = 0;
     const dbTotalCount = endorsements.length;
 
     let rcvCount = 0;
@@ -169,6 +194,10 @@ export class EndorsementRepository implements IEndorsementRepository {
         end.status === 'PENDING_PAYMENT'
       ) {
         dbPendingApprovalCount++;
+      }
+
+      if (end.status === 'PENDING_PAYMENT') {
+        dbPendingPaymentCount++;
       }
 
       // Ramos: RCV vs Casco
@@ -288,6 +317,7 @@ export class EndorsementRepository implements IEndorsementRepository {
       totalTransactions,
       rejectionRate,
       auditDeviationRate,
+      totalPendingPayment: dbPendingPaymentCount,
       branchDistribution: [
         { name: 'RCV Automóvil', pct: rcvPct },
         { name: 'Casco Automóvil', pct: cascoPct },
@@ -295,6 +325,18 @@ export class EndorsementRepository implements IEndorsementRepository {
       channelDistribution: chanDistribution,
       recentActivity: finalActivities,
     };
+  }
+
+  async findAuditLogs(tenantId: string, endorsementId: string): Promise<any[]> {
+    return this.prisma.endorsementAudit.findMany({
+      where: {
+        tenantId,
+        endorsementId,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
   }
 
   // ─── Mapper: Prisma Model → Domain Entity ─────────────────────────────────

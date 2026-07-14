@@ -11,6 +11,7 @@ export interface EndorsementFilters {
   policyId?: string;
   status?: string;
   endorsementTypeId?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -67,6 +68,11 @@ export interface IEndorsementRepository {
    * Obtiene estadísticas agregadas y actividades recientes para el dashboard.
    */
   getDashboardStats(tenantId: string): Promise<any>;
+
+  /**
+   * Obtiene la traza de auditoría de un endoso.
+   */
+  findAuditLogs(tenantId: string, endorsementId: string): Promise<any[]>;
 }
 
 export const ENDORSEMENT_REPOSITORY_TOKEN = 'ENDORSEMENT_REPOSITORY';
