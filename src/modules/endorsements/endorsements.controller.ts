@@ -148,6 +148,12 @@ Flujo completo de emisión de endoso:
       'REJECTED',
     ],
   })
+  @ApiQuery({
+    name: 'endorsementTypeId',
+    required: false,
+    description: 'Filtrar por tipo de endoso',
+  })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Filtrar por texto de búsqueda' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
   @ApiResponse({ status: 200, description: 'Lista paginada de endosos' })
@@ -155,15 +161,23 @@ Flujo completo de emisión de endoso:
     @Req() req: Request & { tenantId: string },
     @Query('policyId') policyId?: string,
     @Query('status') status?: string,
+    @Query('endorsementTypeId') endorsementTypeId?: string,
+    @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.endorsementRepo.findMany(req.tenantId, {
+    const result = await this.endorsementRepo.findMany(req.tenantId, {
       policyId,
       status,
+      endorsementTypeId,
+      search,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });
+    return {
+      ...result,
+      data: result.data.map((e) => e.toPlainObject()),
+    };
   }
 
   // ─── GET /endorsements/dashboard/stats ───────────────────────────────────
@@ -191,6 +205,24 @@ Flujo completo de emisión de endoso:
       throw new Error(`Endoso ${id} no encontrado`);
     }
     return endorsement.toPlainObject();
+  }
+
+  // ─── GET /endorsements/:id/audit ─────────────────────────────────────────
+
+  @Get(':id/audit')
+  @ApiOperation({ summary: 'Obtener la traza de auditoría de un endoso' })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Traza de auditoría' })
+  @ApiResponse({ status: 404, description: 'Endoso no encontrado' })
+  async getAuditLogs(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request & { tenantId: string },
+  ) {
+    const endorsement = await this.endorsementRepo.findById(req.tenantId, id);
+    if (!endorsement) {
+      throw new Error(`Endoso ${id} no encontrado`);
+    }
+    return this.endorsementRepo.findAuditLogs(req.tenantId, id);
   }
 
   // ─── POST /endorsements/evaluate ─────────────────────────────────────────
