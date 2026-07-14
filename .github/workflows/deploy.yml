@@ -17,19 +17,13 @@ jobs:
       - name: 📥 Obtener el código fuente
         uses: actions/checkout@v4
 
-      - name: 🧹 Limpiar instalación previa de pnpm
-        run: rm -rf ~/setup-pnpm || true
-
-      - name: 📦 Instalar pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 11
-
       - name: ⚙️ Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'pnpm'
+
+      - name: 📦 Instalar pnpm
+        run: npm install -g pnpm@11
 
       - name: 📦 Instalar dependencias
         run: pnpm install --frozen-lockfile
