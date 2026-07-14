@@ -1,0 +1,103 @@
+name: Despliegue Backend Multi-Etapa
+
+on:
+  push:
+    branches:
+      - develop
+      - qa
+      - preprod
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: 📥 Obtener el código fuente
+        uses: actions/checkout@v4
+
+      - name: 🧹 Limpiar instalación previa de pnpm
+        run: rm -rf ~/setup-pnpm || true
+
+      - name: 📦 Instalar pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: 📦 Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: 🛠️ Compilar el proyecto
+        run: pnpm run build
+
+      # 📋 PASO CLAVE: Determinar variables de entorno según la rama
+      - name: 📋 Definir variables de entorno para despliegue
+        id: vars
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "dest_dir=/opt/services/git-web-endosos-backend" >> $GITHUB_OUTPUT
+            echo "pm2_name=git-web-endosos-backend" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name }}" = "preprod" ]; then
+            echo "dest_dir=/opt/services/git-web-endosos-backend-preprod" >> $GITHUB_OUTPUT
+            echo "pm2_name=git-web-endosos-backend-preprod" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_name }}" = "qa" ]; then
+            echo "dest_dir=/opt/services/git-web-endosos-backend-qa" >> $GITHUB_OUTPUT
+            echo "pm2_name=git-web-endosos-backend-qa" >> $GITHUB_OUTPUT
+          else
+            echo "dest_dir=/opt/services/git-web-endosos-backend-dev" >> $GITHUB_OUTPUT
+            echo "pm2_name=git-web-endosos-backend-dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🚚 Copiar archivos a producción
+        run: |
+          mkdir -p ${{ steps.vars.outputs.dest_dir }}
+          rsync -av --delete dist/ ${{ steps.vars.outputs.dest_dir }}/dist/
+          rsync -av --delete prisma/ ${{ steps.vars.outputs.dest_dir }}/prisma/
+          cp package.json pnpm-lock.yaml ${{ steps.vars.outputs.dest_dir }}/
+
+      - name: 📦 Instalar dependencias de producción en destino
+        run: |
+          cd ${{ steps.vars.outputs.dest_dir }}
+          # --ignore-scripts: postinstall ejecuta "prisma generate" pero prisma CLI
+          # es devDependency y no está disponible en install --prod.
+          pnpm install --prod --frozen-lockfile --ignore-scripts
+
+      - name: ✅ Verificar artefacto compilado
+        run: |
+          DEST="${{ steps.vars.outputs.dest_dir }}"
+          if [ -f "$DEST/dist/src/main.js" ]; then
+            echo "main.js encontrado en dist/src/main.js"
+          elif [ -f "$DEST/dist/main.js" ]; then
+            echo "main.js encontrado en dist/main.js"
+          else
+            echo "ERROR: no se encontró main.js en $DEST/dist"
+            find "$DEST/dist" -name "main.js" -o -type f | head -100
+            exit 1
+          fi
+
+      - name: ⚙️ Generar cliente y aplicar migraciones
+        run: |
+          cd ${{ steps.vars.outputs.dest_dir }}
+          $GITHUB_WORKSPACE/node_modules/.bin/prisma generate
+          $GITHUB_WORKSPACE/node_modules/.bin/prisma migrate deploy
+
+      - name: 🚀 Reiniciar el servicio en PM2
+        run: |
+          DEST="${{ steps.vars.outputs.dest_dir }}"
+          PM2_NAME="${{ steps.vars.outputs.pm2_name }}"
+          if [ -f "$DEST/dist/src/main.js" ]; then
+            MAIN_JS="$DEST/dist/src/main.js"
+          else
+            MAIN_JS="$DEST/dist/main.js"
+          fi
+          echo "Iniciando $PM2_NAME con $MAIN_JS"
+          pm2 delete "$PM2_NAME" 2>/dev/null || true
+          pm2 start "$MAIN_JS" --name "$PM2_NAME" --cwd "$DEST"
+          pm2 save
