@@ -28,6 +28,9 @@ jobs:
       - name: 📦 Instalar dependencias
         run: pnpm install --frozen-lockfile
 
+      - name: ⚙️ Generar cliente de Prisma (local)
+        run: DATABASE_URL="postgresql://localhost:5432" npx prisma generate
+
       - name: 🛠️ Compilar el proyecto
         run: pnpm run build
 
