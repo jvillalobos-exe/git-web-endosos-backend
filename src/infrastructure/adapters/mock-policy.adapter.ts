@@ -66,7 +66,10 @@ export class MockPolicyAdapter implements IPolicyPort {
 
     // Si se busca por cédula, consumir la API externa de La Mundial
     if (filters.cedula) {
-      const cleanCedula = filters.cedula.trim().replace(/\./g, '');
+      // Extrae solo el número de documento omitiendo el prefijo de nacionalidad y guiones (ej. V-14484939 -> 14484939)
+      const cleanCedula = filters.cedula.trim()
+        .replace(/^[a-zA-Z]-?/, '')
+        .replace(/\./g, '');
       try {
         const coreUrl = process.env.CORE_API_URL || 'https://qaapisys2000.lamundialdeseguros.com';
         const response = await fetch(

@@ -359,6 +359,20 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     summary: 'Generar sesión de pago SSO en la pasarela externa',
     description: 'Delega la autenticación y devuelve el redirect_url para la pantalla de pagos.',
   })
+  @ApiResponse({
+    status: 200,
+    description: 'Sesión de pago SSO generada exitosamente. Contiene la URL del checkout.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        redirect_url: { 
+          type: 'string', 
+          example: 'https://cierrelmds.exelixitech.com/pagos?token=eyJhbGciOi...' 
+        },
+      },
+    },
+  })
   async getPaymentSession(@Body() dto: PaymentSessionDto) {
     const { policyId, amount, currency, concept } = dto;
     let amountVes = amount;
