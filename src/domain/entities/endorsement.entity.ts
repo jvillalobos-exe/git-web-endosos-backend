@@ -36,6 +36,8 @@ export interface EndorsementCalculation {
   adminFee: number;
   totalCharge: number;
   formula: string;
+  cnrecibo?: string;
+  crecibo?: number;
 }
 
 /**
@@ -229,6 +231,33 @@ export class Endorsement {
     }
     this.props.status = EndorsementStatus.REJECTED;
     this.props.rejectionReason = reason;
+    this.props.updatedAt = new Date();
+    return this;
+  }
+
+  /**
+   * Asocia las referencias del recibo generado en el Core al cálculo del endoso.
+   */
+  setCoreReceipt(cnrecibo: string, crecibo: number): void {
+    if (this.props.calculation) {
+      this.props.calculation = {
+        ...this.props.calculation,
+        cnrecibo,
+        crecibo,
+      };
+      this.props.updatedAt = new Date();
+    }
+  }
+
+  /**
+   * Transición: PENDING_PAYMENT → EMITTED
+   * Finaliza el endoso al verificarse el pago.
+   */
+  completePayment(endorsementNumber: string): Endorsement {
+    this.assertStatus(EndorsementStatus.PENDING_PAYMENT, 'completePayment');
+    this.props.status = EndorsementStatus.EMITTED;
+    this.props.endorsementNumber = endorsementNumber;
+    this.props.emittedAt = new Date();
     this.props.updatedAt = new Date();
     return this;
   }

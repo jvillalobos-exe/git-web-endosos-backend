@@ -10,6 +10,7 @@ import { PoliciesController } from '../policies/policies.controller';
 import { CreateEndorsementUseCase } from '../../application/use-cases/create-endorsement.use-case';
 import { EvaluateRulesUseCase } from '../../application/use-cases/evaluate-rules.use-case';
 import { QueryPolicyUseCase } from '../../application/use-cases/query-policy.use-case';
+import { ProcessPaymentCallbackUseCase } from '../../application/use-cases/process-payment-callback.use-case';
 import { RuleEngineService } from '../../domain/services/rule-engine.service';
 import { CalculationEngineService } from '../../domain/services/calculation-engine.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
@@ -53,6 +54,7 @@ import { ENDORSEMENT_REPOSITORY_TOKEN } from '../../domain/ports/endorsement-rep
     CreateEndorsementUseCase,
     EvaluateRulesUseCase,
     QueryPolicyUseCase,
+    ProcessPaymentCallbackUseCase,
   ],
   exports: [PrismaService, TenantConfigRepository],
 })

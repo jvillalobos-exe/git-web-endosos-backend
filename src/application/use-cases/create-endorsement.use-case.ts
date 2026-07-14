@@ -278,11 +278,18 @@ export class CreateEndorsementUseCase {
 
     if (isReadyForCore && calculation && dto.routeId) {
       try {
-        await this.processCoreIntegration(
+        const coreReceipt = await this.processCoreIntegration(
           policy,
           calculation,
           dto.effectiveDate,
         );
+        if (coreReceipt) {
+          endorsement.setCoreReceipt(
+            coreReceipt.cnrecibo,
+            coreReceipt.crecibo,
+          );
+          await this.endorsementRepo.update(endorsement);
+        }
       } catch (err) {
         this.logger.error(`Error during Core integration: ${err.message}`);
         throw err;
@@ -300,7 +307,7 @@ export class CreateEndorsementUseCase {
     policy: any,
     calculation: any,
     effectiveDate: string,
-  ): Promise<void> {
+  ): Promise<{ cnrecibo: string; crecibo: number } | void> {
     const pendingReceipts = (policy.recibos ?? [])
       .filter((r: any) => r.Status_Rec === 'Pendiente')
       .map((r: any) => r.cnrecibo?.trim() || r.crecibo?.toString());
@@ -374,6 +381,20 @@ export class CreateEndorsementUseCase {
       const errText = await crearRes.text();
       throw new BadRequestException(
         `Fallo al crear el recibo en el Core: ${errText}`,
+      );
+    }
+
+    try {
+      const data = await crearRes.json();
+      if (data && data.success && data.cnrecibo && data.crecibo) {
+        return {
+          cnrecibo: data.cnrecibo.trim(),
+          crecibo: data.crecibo,
+        };
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Could not parse JSON response from Core receipt creation: ${e.message}`,
       );
     }
   }

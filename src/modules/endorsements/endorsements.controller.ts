@@ -46,6 +46,7 @@ import {
 import { Inject } from '@nestjs/common';
 import { TenantConfigRepository } from '../../infrastructure/repositories/tenant-config.repository';
 import { CalculationEngineService } from '../../domain/services/calculation-engine.service';
+import { ProcessPaymentCallbackUseCase } from '../../application/use-cases/process-payment-callback.use-case';
 
 /** Header de autenticación de tenant requerido en todos los endpoints */
 const TENANT_HEADER = {
@@ -70,6 +71,7 @@ export class EndorsementsController {
     private readonly endorsementRepo: IEndorsementRepository,
     private readonly tenantConfigRepo: TenantConfigRepository,
     private readonly calculationEngine: CalculationEngineService,
+    private readonly processPaymentCallback: ProcessPaymentCallbackUseCase,
   ) {}
 
   // ─── POST /endorsements ──────────────────────────────────────────────────
@@ -478,7 +480,7 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
       required: ['policyId', 'status'],
     },
   })
-  handlePaymentCallbackPost(
+  async handlePaymentCallbackPost(
     @Body() payload: any
   ) {
     const policyId = payload.idOperacion || payload.payload?.idOperacion || payload.policyId;
@@ -491,8 +493,17 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
       throw new BadRequestException('ID de operación (idOperacion) no especificado en el callback.');
     }
 
-    this.paymentStatuses.set(policyId, { status, reference, message });
-    return { success: true, message: 'Resultado del pago registrado exitosamente' };
+    const result = await this.processPaymentCallback.execute({
+      policyId,
+      isSuccess,
+      reference,
+      message,
+    });
+
+    const finalStatus = result.status || status;
+
+    this.paymentStatuses.set(policyId, { status: finalStatus, reference, message });
+    return { success: result.success, message: result.message };
   }
 
   // ─── GET /endorsements/payment-callback ──────────────────────────────────
@@ -506,16 +517,27 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
   @ApiQuery({ name: 'status', required: true, description: 'success o failed' })
   @ApiQuery({ name: 'reference', required: false, description: 'Referencia del pago' })
   @ApiQuery({ name: 'message', required: false, description: 'Mensaje' })
-  handlePaymentCallbackGet(
+  async handlePaymentCallbackGet(
     @Query('policyId') policyId: string,
     @Query('status') status: string,
     @Query('reference') reference: string,
     @Query('message') message: string,
     @Res() res: any
   ) {
-    this.paymentStatuses.set(policyId, { status, reference, message });
+    const isSuccessInput = status === 'success';
 
-    const isSuccess = status === 'success';
+    const result = await this.processPaymentCallback.execute({
+      policyId,
+      isSuccess: isSuccessInput,
+      reference,
+      message,
+    });
+
+    const finalStatus = result.status || status;
+
+    this.paymentStatuses.set(policyId, { status: finalStatus, reference, message });
+
+    const isSuccess = finalStatus === 'success';
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="es">
