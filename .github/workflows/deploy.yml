@@ -79,6 +79,18 @@ jobs:
       - name: ⚙️ Generar cliente y aplicar migraciones
         run: |
           cd ${{ steps.vars.outputs.dest_dir }}
+          
+          # Cargar variables de entorno desde el archivo .env del servidor real
+          if [ -f .env ]; then
+            echo "Cargando variables de entorno desde el archivo .env del servidor..."
+            export $(cat .env | grep -v '^#' | xargs)
+          else
+            echo "ERROR: No se encontró el archivo .env en la carpeta de destino: ${{ steps.vars.outputs.dest_dir }}"
+            echo "Por favor, crea el archivo .env en el servidor con las variables correspondientes (incluyendo DATABASE_URL) antes del primer despliegue."
+            exit 1
+          fi
+          
+          # Ejecutar comandos de Prisma leyendo la variable DATABASE_URL cargada del entorno real
           $GITHUB_WORKSPACE/node_modules/.bin/prisma generate
           $GITHUB_WORKSPACE/node_modules/.bin/prisma migrate deploy
 
