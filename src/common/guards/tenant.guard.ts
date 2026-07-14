@@ -42,6 +42,11 @@ export class TenantGuard implements CanActivate {
 
     const tenantId = request.headers['x-tenant-id'] as string;
 
+    // Permitir bypass para endpoints públicos de callback y status de pago
+    if (request.url && (request.url.includes('/payment-callback') || request.url.includes('/payment-status'))) {
+      return true;
+    }
+
     if (!tenantId) {
       throw new BadRequestException(
         'Header X-Tenant-Id es requerido. Incluye el UUID de tu aseguradora.',

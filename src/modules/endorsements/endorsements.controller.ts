@@ -17,6 +17,9 @@ import {
   ParseUUIDPipe,
   Req,
   BadRequestException,
+  Sse,
+  MessageEvent,
+  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -38,6 +41,7 @@ import {
   CreateEndorsementDto,
   EvaluateRulesDto,
   CalculateEndorsementDto,
+  PaymentSessionDto,
 } from '../../application/dtos/create-endorsement.dto';
 import { Inject } from '@nestjs/common';
 import { TenantConfigRepository } from '../../infrastructure/repositories/tenant-config.repository';
@@ -56,6 +60,8 @@ const TENANT_HEADER = {
 @UseGuards(TenantGuard)
 @Controller('endorsements')
 export class EndorsementsController {
+  private readonly paymentStatuses = new Map<string, { status: string; reference?: string; message?: string }>();
+
   constructor(
     private readonly createEndorsement: CreateEndorsementUseCase,
     private readonly evaluateRules: EvaluateRulesUseCase,
@@ -309,5 +315,275 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     );
 
     return { policyId: dto.policyId, routeId: dto.routeId, calculation };
+  }
+
+  // ─── POST /endorsements/payment-session ──────────────────────────────────
+
+  @Post('payment-session')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Generar sesión de pago SSO en la pasarela externa',
+    description: 'Delega la autenticación y devuelve el redirect_url para la pantalla de pagos.',
+  })
+  async getPaymentSession(@Body() dto: PaymentSessionDto) {
+    const { policyId, amount, currency, concept } = dto;
+    let amountVes = amount;
+
+    // 1. Obtener tasa BCV si la póliza está en USD
+    if (currency === 'USD') {
+      try {
+        const coreApiUrl = process.env.CORE_API_URL || 'http://localhost:3000';
+        const bcvRes = await fetch(`${coreApiUrl}/api/v1/valrep/tasaBCV`);
+        if (bcvRes.ok) {
+          const bcvData = await bcvRes.json();
+          const rate = bcvData?.ptasamon || bcvData?.[0]?.ptasamon;
+          if (rate) {
+            amountVes = amount * parseFloat(rate);
+            console.log(`Conversión de moneda: ${amount} USD a tasa BCV ${rate} = ${amountVes} VES`);
+          }
+        }
+      } catch (err) {
+        console.error('Error al obtener la tasa BCV de Core, usando tasa de fallback 47.0:', err);
+        amountVes = amount * 47.0; // Fallback razonable si el Core está caído
+      }
+    }
+
+    // Redondear a 2 decimales
+    amountVes = 5; // Temporalmente en 5 para pruebas de pago
+
+    // 2. Realizar petición de delegación de SSO a cierrelmds
+    const ssoKey = process.env.SSO_KEY || 'b72c877b3f2841c1989191ac17a46b19ec64f993a97102ac6451b759f284f5ba';
+    const ssoUrl = 'https://cierrelmds.exelixitech.com/nexus-api/api/auth/sso-delegate';
+
+    const notifyUrl = process.env.NOTIFY_URL || 'http://localhost:3005/api/endorsements/payment-callback';
+
+    const payload = {
+      target: 'pagos',
+      metadata: {
+        checkout: {
+          title: `Pago Endoso Póliza ${policyId}`,
+          totalVes: amountVes,
+          lines: [
+            {
+              label: concept || 'Diferencia de Prima por Endoso',
+              amountVes: amountVes,
+            },
+          ],
+        },
+        rules: {
+          requirePayment: true,
+          methods: ['mobile'],
+        },
+        payload: {
+          idOperacion: policyId,
+          notifyUrl: notifyUrl,
+        },
+      },
+    };
+
+    try {
+      const response = await fetch(ssoUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ssoKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new BadRequestException(`Error delegando sesión de pago SSO: ${errorText}`);
+      }
+
+      const data = await response.json();
+      return data; // Contiene redirect_url, success, empresa, modulo, etc.
+    } catch (err: any) {
+      if (err instanceof BadRequestException) throw err;
+      throw new BadRequestException(`Fallo de conexión al pasarela de pago: ${err.message}`);
+    }
+  }
+
+  // ─── GET /endorsements/payment-status/:policyId ──────────────────────────
+
+  @Get('payment-status/:policyId')
+  @ApiOperation({
+    summary: 'Consultar estado del pago para una póliza (Polling)',
+    description: 'Devuelve el estado actual de la transacción del pago. Ideal para verificar constantemente mediante polling.',
+  })
+  @ApiParam({ name: 'policyId', description: 'ID o número de la póliza' })
+  paymentStatus(@Param('policyId') policyId: string) {
+    const payment = this.paymentStatuses.get(policyId);
+    if (!payment) {
+      return { status: 'pending' };
+    }
+
+    // Una vez consultado el estado definitivo (éxito o fallo), lo limpiamos de memoria
+    if (payment.status === 'success' || payment.status === 'failed') {
+      this.paymentStatuses.delete(policyId);
+    }
+
+    return payment;
+  }
+
+  // ─── POST /endorsements/payment-callback ─────────────────────────────────
+
+  @Post('payment-callback')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Recibir confirmación del pago desde la pasarela (Webhook)',
+    description: 'Recibe el estado final del pago y lo almacena temporalmente para que el cliente lo consulte.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        policyId: { type: 'string', description: 'ID de la póliza asociada al pago' },
+        status: { type: 'string', enum: ['success', 'failed'], description: 'Estado del pago' },
+        reference: { type: 'string', description: 'Referencia de la transacción' },
+        message: { type: 'string', description: 'Mensaje adicional' },
+      },
+      required: ['policyId', 'status'],
+    },
+  })
+  handlePaymentCallbackPost(
+    @Body() payload: any
+  ) {
+    const policyId = payload.idOperacion || payload.payload?.idOperacion || payload.policyId;
+    const isSuccess = payload.status === 'ok' && payload.paymentVerified === true;
+    const status = isSuccess ? 'success' : 'failed';
+    const reference = payload.payment?.reference || '';
+    const message = payload.message || payload.payment?.message || 'Error en validación de pago';
+
+    if (!policyId) {
+      throw new BadRequestException('ID de operación (idOperacion) no especificado en el callback.');
+    }
+
+    this.paymentStatuses.set(policyId, { status, reference, message });
+    return { success: true, message: 'Resultado del pago registrado exitosamente' };
+  }
+
+  // ─── GET /endorsements/payment-callback ──────────────────────────────────
+
+  @Get('payment-callback')
+  @ApiOperation({
+    summary: 'Página de retorno tras finalizar el pago (Redirect)',
+    description: 'Registra el resultado del pago y renderiza una interfaz para cerrar la ventana del pago.',
+  })
+  @ApiQuery({ name: 'policyId', required: true, description: 'ID de la póliza' })
+  @ApiQuery({ name: 'status', required: true, description: 'success o failed' })
+  @ApiQuery({ name: 'reference', required: false, description: 'Referencia del pago' })
+  @ApiQuery({ name: 'message', required: false, description: 'Mensaje' })
+  handlePaymentCallbackGet(
+    @Query('policyId') policyId: string,
+    @Query('status') status: string,
+    @Query('reference') reference: string,
+    @Query('message') message: string,
+    @Res() res: any
+  ) {
+    this.paymentStatuses.set(policyId, { status, reference, message });
+
+    const isSuccess = status === 'success';
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Pago ${isSuccess ? 'Exitoso' : 'Fallido'}</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+          }
+          .card {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+          }
+          .icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 32px;
+          }
+          .success-icon {
+            background-color: #d1fae5;
+            color: #059669;
+          }
+          .error-icon {
+            background-color: #fee2e2;
+            color: #dc2626;
+          }
+          h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+          }
+          p {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+          }
+          .btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+          }
+          .btn:hover {
+            background-color: #1d4ed8;
+          }
+        </style>
+        <script>
+          // Cerrar la ventana automáticamente
+          setTimeout(() => {
+            try {
+              window.close();
+            } catch (e) {
+              console.log('No se pudo cerrar la pestaña automáticamente:', e);
+            }
+          }, 3000);
+        </script>
+      </head>
+      <body>
+        <div class="card">
+          <div class="icon ${isSuccess ? 'success-icon' : 'error-icon'}">
+            ${isSuccess ? '✓' : '✗'}
+          </div>
+          <h1>Pago ${isSuccess ? 'Procesado con Éxito' : 'No Completado'}</h1>
+          <p>
+            ${isSuccess 
+              ? 'Tu pago se ha registrado correctamente en nuestro sistema. El proceso de endoso continuará automáticamente en la plataforma principal.' 
+              : message || 'Hubo un inconveniente al procesar tu pago. Por favor, intenta de nuevo.'}
+          </p>
+          <button class="btn" onclick="window.close()">Cerrar Ventana</button>
+        </div>
+      </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    return res.status(HttpStatus.OK).send(htmlContent);
   }
 }

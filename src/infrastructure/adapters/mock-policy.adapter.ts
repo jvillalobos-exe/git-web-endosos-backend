@@ -68,8 +68,9 @@ export class MockPolicyAdapter implements IPolicyPort {
     if (filters.cedula) {
       const cleanCedula = filters.cedula.trim().replace(/\./g, '');
       try {
+        const coreUrl = process.env.CORE_API_URL || 'https://qaapisys2000.lamundialdeseguros.com';
         const response = await fetch(
-          'https://qaapisys2000.lamundialdeseguros.com/api/v1/poliza/searchPoliza',
+          `${coreUrl}/api/v1/poliza/searchPoliza`,
           {
             method: 'POST',
             headers: {
@@ -331,8 +332,9 @@ export class MockPolicyAdapter implements IPolicyPort {
     };
 
     try {
+      const coreUrl = process.env.CORE_API_URL || 'https://qaapisys2000.lamundialdeseguros.com';
       const response = await fetch(
-        'https://qaapisys2000.lamundialdeseguros.com/api/v1/valrep/planes/v2/',
+        `${coreUrl}/api/v1/valrep/planes/v2/`,
         {
           method: 'POST',
           headers: {

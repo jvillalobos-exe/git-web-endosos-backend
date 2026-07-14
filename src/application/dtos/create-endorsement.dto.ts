@@ -136,3 +136,28 @@ export class CalculateEndorsementDto {
   @IsDateString()
   effectiveDate: string;
 }
+
+/**
+ * @class PaymentSessionDto
+ * @description Datos para generar una sesión de pago SSO delegada.
+ */
+export class PaymentSessionDto {
+  @ApiProperty({ description: 'ID de la póliza', example: 'POL-001' })
+  @IsString()
+  @IsNotEmpty()
+  policyId: string;
+
+  @ApiProperty({ description: 'Monto a cobrar', example: 100 })
+  @IsNotEmpty()
+  amount: number;
+
+  @ApiProperty({ description: 'Moneda (USD o VES)', example: 'USD' })
+  @IsString()
+  @IsNotEmpty()
+  currency: string;
+
+  @ApiPropertyOptional({ description: 'Concepto de cobro', example: 'Diferencia de prima' })
+  @IsOptional()
+  @IsString()
+  concept?: string;
+}
