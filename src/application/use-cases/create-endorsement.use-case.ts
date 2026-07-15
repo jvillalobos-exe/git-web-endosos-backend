@@ -303,4 +303,3 @@ export class CreateEndorsementUseCase {
     return endorsement;
   }
 }
-}
