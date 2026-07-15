@@ -401,8 +401,16 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
       // Registrar el estado en el mapa temporal de statuses
       this.paymentStatuses.set(policyId, { status: finalStatus, reference, message });
       
-      // URL local para que el front redirija y cierre la pantalla de pago
-      const redirectUrl = `/api/endorsements/payment-callback?policyId=${encodeURIComponent(policyId)}&status=${finalStatus}&reference=${reference}&message=${encodeURIComponent(message)}`;
+      // Obtener URL absoluta del callback a partir de las variables de entorno
+      const notifyUrl = process.env.NOTIFY_URL || 'http://localhost:3005/api/endorsements/payment-callback';
+      
+      const urlObj = new URL(notifyUrl);
+      urlObj.searchParams.set('policyId', policyId);
+      urlObj.searchParams.set('status', finalStatus);
+      urlObj.searchParams.set('reference', reference);
+      urlObj.searchParams.set('message', message);
+      
+      const redirectUrl = urlObj.toString();
       
       return {
         success: true,
@@ -435,9 +443,9 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     // Redondear a 2 decimales
     amountVes = 5; // Temporalmente en 5 para pruebas de pago
 
-    // 2. Realizar petición de delegación de SSO a cierrelmds
+    // 2. Realizar petición de delegación de SSO
     const ssoKey = process.env.SSO_KEY || 'b72c877b3f2841c1989191ac17a46b19ec64f993a97102ac6451b759f284f5ba';
-    const ssoUrl = 'https://cierrelmds.exelixitech.com/nexus-api/api/auth/sso-delegate';
+    const ssoUrl = process.env.SSO_URL || 'https://cierrelmds.exelixitech.com/nexus-api/api/auth/sso-delegate';
 
     const notifyUrl = process.env.NOTIFY_URL || 'http://localhost:3005/api/endorsements/payment-callback';
 
