@@ -121,14 +121,7 @@ export class CalculationEngineService {
     targetPremium: number,
     sourcePremiumFallback?: number,
   ): EndorsementCalculationResult {
-    const hasPaidReceipts =
-      policy.recibos &&
-      Array.isArray(policy.recibos) &&
-      policy.recibos.length > 0
-        ? policy.recibos.some((r: any) => r.Status_Rec === 'Cobrado')
-        : true;
-
-    let currentPremium = hasPaidReceipts ? policy.annualPremium : 0;
+    let currentPremium = policy.annualPremium > 0 ? policy.annualPremium : 0;
     
     // Si la prima comercial anual de origen de la póliza es 0, usar la del tarifario como fallback
     if (currentPremium === 0 && sourcePremiumFallback) {

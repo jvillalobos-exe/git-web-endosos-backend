@@ -544,7 +544,7 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     // TODO: REVERTIR ESTOS CAMBIOS CUANDO SE ESTABILICE EL MÓDULO DE PAGOS
     // Cambiar SIMULATE_PAYMENT a false para reactivar la pasarela de pagos real.
     // =========================================================================
-    const SIMULATE_PAYMENT = true; 
+    const SIMULATE_PAYMENT = false; 
     
     if (SIMULATE_PAYMENT) {
       console.log(`[SIMULACIÓN PAGO] Cortocircuitando pasarela externa para policyId=${policyId}`);
