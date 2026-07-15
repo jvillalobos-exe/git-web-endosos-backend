@@ -36,6 +36,7 @@ import type { IEndorsementRepository } from '../../domain/ports/endorsement-repo
 import { ENDORSEMENT_REPOSITORY_TOKEN } from '../../domain/ports/endorsement-repository.port';
 import { TenantConfigRepository } from '../../infrastructure/repositories/tenant-config.repository';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { CoreIntegrationService } from '../../infrastructure/adapters/core-integration.service';
 
 /**
  * @class CreateEndorsementUseCase
@@ -58,6 +59,7 @@ export class CreateEndorsementUseCase {
     private readonly ruleEngine: RuleEngineService,
     private readonly calculationEngine: CalculationEngineService,
     private readonly prisma: PrismaService,
+    private readonly coreIntegration: CoreIntegrationService,
   ) {}
 
   async execute(
@@ -272,13 +274,11 @@ export class CreateEndorsementUseCase {
     });
 
     // ─── 6. Integración con el Core (fuera de la transacción de base de datos) ───
-    const isReadyForCore =
-      endorsement.status === EndorsementStatus.EMITTED ||
-      endorsement.status === EndorsementStatus.PENDING_PAYMENT;
+    const isReadyForCore = endorsement.status === EndorsementStatus.EMITTED;
 
     if (isReadyForCore && calculation && dto.routeId) {
       try {
-        const coreReceipt = await this.processCoreIntegration(
+        const coreReceipt = await this.coreIntegration.processCoreIntegration(
           policy,
           calculation,
           dto.effectiveDate,
@@ -290,7 +290,7 @@ export class CreateEndorsementUseCase {
           );
           await this.endorsementRepo.update(endorsement);
         }
-      } catch (err) {
+      } catch (err: any) {
         this.logger.error(`Error during Core integration: ${err.message}`);
         throw err;
       }
@@ -302,100 +302,5 @@ export class CreateEndorsementUseCase {
 
     return endorsement;
   }
-
-  private async processCoreIntegration(
-    policy: any,
-    calculation: any,
-    effectiveDate: string,
-  ): Promise<{ cnrecibo: string; crecibo: number } | void> {
-    const pendingReceipts = (policy.recibos ?? [])
-      .filter((r: any) => r.Status_Rec === 'Pendiente')
-      .map((r: any) => r.cnrecibo?.trim() || r.crecibo?.toString());
-
-    const CORE_API_BASE_URL =
-      process.env.CORE_API_URL ??
-      (process.env.NODE_ENV === 'development'
-        ? 'http://localhost:5254'
-        : 'https://qaapisys2000.lamundialdeseguros.com');
-
-    // 1. Anular recibos pendientes si existen
-    if (pendingReceipts.length > 0) {
-      this.logger.log(
-        `Voiding pending receipts in Core: ${pendingReceipts.join(', ')}`,
-      );
-      const anularRes = await fetch(
-        `${CORE_API_BASE_URL}/api/v1/changes/anularRecibos`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            cnpoliza: policy.cnpoliza || policy.policyId,
-            recibos: pendingReceipts,
-            fanulacion: effectiveDate,
-            cusuario: 7,
-          }),
-        },
-      );
-
-      if (!anularRes.ok) {
-        const errText = await anularRes.text();
-        throw new BadRequestException(
-          `Fallo al anular recibos en el Core: ${errText}`,
-        );
-      }
-    }
-
-    let fanopoliza = policy.fanopoliza;
-    let fmespoliza = policy.fmespoliza;
-    if ((!fanopoliza || !fmespoliza) && policy.policyId.includes('-')) {
-      const parts = policy.policyId.split('-');
-      if (parts.length === 3) {
-        fanopoliza = parseInt(parts[1], 10);
-        fmespoliza = parseInt(parts[2], 10);
-      }
-    }
-
-    // 2. Crear el nuevo recibo con la prima calculada
-    this.logger.log(
-      `Creating new receipt in Core for premium: ${calculation.targetPremium}`,
-    );
-    const crearRes = await fetch(
-      `${CORE_API_BASE_URL}/api/v1/endoso-recibos/crearRecibo`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cnpoliza: policy.cnpoliza || policy.policyId,
-          fanopoliza,
-          fmespoliza,
-          mprima: calculation.targetPremium,
-          fdesde: effectiveDate,
-          fhasta: policy.endDate,
-          cusuario: 7,
-          cplan: calculation.targetPlan,
-        }),
-      },
-    );
-
-    if (!crearRes.ok) {
-      const errText = await crearRes.text();
-      throw new BadRequestException(
-        `Fallo al crear el recibo en el Core: ${errText}`,
-      );
-    }
-
-    try {
-      const data = await crearRes.json();
-      if (data && data.success && data.cnrecibo && data.crecibo) {
-        return {
-          cnrecibo: data.cnrecibo.trim(),
-          crecibo: data.crecibo,
-        };
-      }
-    } catch (e) {
-      this.logger.warn(
-        `Could not parse JSON response from Core receipt creation: ${e.message}`,
-      );
-    }
-  }
+}
 }

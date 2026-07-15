@@ -17,6 +17,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { EndorsementRepository } from '../../infrastructure/repositories/endorsement.repository';
 import { TenantConfigRepository } from '../../infrastructure/repositories/tenant-config.repository';
 import { MockPolicyAdapter } from '../../infrastructure/adapters/mock-policy.adapter';
+import { CoreIntegrationService } from '../../infrastructure/adapters/core-integration.service';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { POLICY_PORT_TOKEN } from '../../domain/ports/policy.port';
 import { ENDORSEMENT_REPOSITORY_TOKEN } from '../../domain/ports/endorsement-repository.port';
@@ -28,6 +29,7 @@ import { ENDORSEMENT_REPOSITORY_TOKEN } from '../../domain/ports/endorsement-rep
     PrismaService,
     TenantGuard,
     TenantConfigRepository,
+    CoreIntegrationService,
 
     // ─── Repositorio (implementa el puerto) ─────────────────────────────
     // Para cambiar la implementación de persistencia, solo cambiar aquí.

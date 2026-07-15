@@ -3,6 +3,9 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { ENDORSEMENT_REPOSITORY_TOKEN } from '../../domain/ports/endorsement-repository.port';
 import type { IEndorsementRepository } from '../../domain/ports/endorsement-repository.port';
 import { Endorsement } from '../../domain/entities/endorsement.entity';
+import { POLICY_PORT_TOKEN } from '../../domain/ports/policy.port';
+import type { IPolicyPort } from '../../domain/ports/policy.port';
+import { CoreIntegrationService } from '../../infrastructure/adapters/core-integration.service';
 
 @Injectable()
 export class ProcessPaymentCallbackUseCase {
@@ -12,6 +15,9 @@ export class ProcessPaymentCallbackUseCase {
     @Inject(ENDORSEMENT_REPOSITORY_TOKEN)
     private readonly endorsementRepo: IEndorsementRepository,
     private readonly prisma: PrismaService,
+    @Inject(POLICY_PORT_TOKEN)
+    private readonly policyPort: IPolicyPort,
+    private readonly coreIntegration: CoreIntegrationService,
   ) {}
 
   async execute(payload: {
@@ -69,7 +75,35 @@ export class ProcessPaymentCallbackUseCase {
       return { success: true, status: 'failed', message: 'Se registró el fallo de pago para reintento.' };
     }
 
-    // 2. Transición del endoso local a EMITTED
+    // 2. Realizar la integración con el Core (anular recibos previos y crear nuevo recibo de endoso en el Core)
+    const calc = endorsement.calculation as any;
+    let coreReceipt: { cnrecibo: string; crecibo: number } | undefined = undefined;
+
+    if (calc && endorsement.routeId) {
+      try {
+        const policy = await this.policyPort.findByPolicyId(endorsement.tenantId, endorsement.policyId);
+        if (!policy) {
+          throw new BadRequestException(`Póliza "${endorsement.policyId}" no encontrada al procesar el pago.`);
+        }
+
+        const effectiveDate = endorsement.effectiveDate.toISOString().split('T')[0];
+        const integrationResult = await this.coreIntegration.processCoreIntegration(
+          policy,
+          calc,
+          effectiveDate,
+        );
+
+        if (integrationResult) {
+          coreReceipt = integrationResult;
+          endorsement.setCoreReceipt(coreReceipt.cnrecibo, coreReceipt.crecibo);
+        }
+      } catch (err: any) {
+        this.logger.error(`Error during Core integration on payment callback: ${err.message}`);
+        throw err;
+      }
+    }
+
+    // 3. Transición del endoso local a EMITTED
     // Generar el próximo número de endoso
     const endorsementNumber = await this.endorsementRepo.generateEndorsementNumber(
       endorsement.tenantId,
@@ -89,18 +123,18 @@ export class ProcessPaymentCallbackUseCase {
           status: endorsement.status,
           reference: reference,
           endorsementNumber: endorsementNumber,
+          cnrecibo: coreReceipt?.cnrecibo,
         },
       },
     });
 
-    // 3. Obtener el número de recibo (cnrecibo) guardado en el endoso
-    const calc = endorsement.calculation as any;
-    const cnrecibo = calc?.cnrecibo;
+    // 4. Notificar cobro al Core de La Mundial (SysIP-backend)
+    const finalCnrecibo = coreReceipt?.cnrecibo || calc?.cnrecibo;
     const totalCharge = calc?.totalCharge || 0;
 
-    if (!cnrecibo) {
+    if (!finalCnrecibo) {
       this.logger.warn(
-        `Endorsement ${endorsement.id} emitted but has no cnrecibo in calculation to report to Core.`,
+        `Endorsement ${endorsement.id} emitted but has no cnrecibo to report to Core.`,
       );
       return {
         success: true,
@@ -109,46 +143,11 @@ export class ProcessPaymentCallbackUseCase {
       };
     }
 
-    // 4. Notificar cobro al Core de La Mundial (SysIP-backend)
-    const CORE_API_BASE_URL =
-      process.env.CORE_API_URL ?? 'https://qaapisys2000.lamundialdeseguros.com';
-    const CORE_API_KEY =
-      process.env.CORE_API_KEY ??
-      '46fce2c9f33e09ed3404fca58592d3000d20d419dabb7cd456e958818ff07de9';
-
-    this.logger.log(
-      `Reporting payment of receipt ${cnrecibo} to Core collection API...`,
-    );
-
-    try {
-      const response = await fetch(
-        `${CORE_API_BASE_URL}/api/v1/external/collection/collect`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'api-key': CORE_API_KEY,
-          },
-          body: JSON.stringify({
-            cnrecibo: cnrecibo,
-            mpago: totalCharge,
-            xreferencia: reference,
-            fpago: new Date().toISOString().split('T')[0],
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        this.logger.error(
-          `Core collection API returned error status ${response.status}: ${errText}`,
-        );
-      } else {
-        this.logger.log(`Payment reported successfully to Core for receipt ${cnrecibo}`);
-      }
-    } catch (err: any) {
-      this.logger.error(`Failed to call Core collection API: ${err.message}`);
-    }
+    await this.coreIntegration.reportPayment({
+      cnrecibo: finalCnrecibo,
+      totalCharge,
+      reference,
+    });
 
     return {
       success: true,
