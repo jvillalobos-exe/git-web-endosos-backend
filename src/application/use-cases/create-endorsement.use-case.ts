@@ -179,10 +179,17 @@ export class CreateEndorsementUseCase {
         );
       }
 
+      const sourcePremiumFallback = this.calculationEngine.getPremiumFromTariff(
+        product.tariff,
+        route.sourcePlanCode,
+        policy.segmentCode,
+      );
+
       const calcResult = this.calculationEngine.calculateEndorsement(
         route,
         policy,
         targetPremium,
+        sourcePremiumFallback,
       );
 
       calculation = {

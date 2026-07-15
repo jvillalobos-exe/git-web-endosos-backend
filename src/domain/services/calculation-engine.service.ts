@@ -110,14 +110,16 @@ export class CalculationEngineService {
    * Calcula el costo de un endoso cuantitativo.
    * Aplica el método de prorrateo definido en la ruta configurada.
    *
-   * @param route         - Ruta de endoso con el método de prorrateo
-   * @param policy        - Snapshot de la póliza (fuente de datos base)
-   * @param targetPremium - Prima del plan destino (del tarifario)
+   * @param route                 - Ruta de endoso con el método de prorrateo
+   * @param policy                - Snapshot de la póliza (fuente de datos base)
+   * @param targetPremium         - Prima del plan destino (del tarifario)
+   * @param sourcePremiumFallback - Prima del plan de origen desde el tarifario (fallback)
    */
   calculateEndorsement(
     route: EndorsementRouteConfig,
     policy: PolicySnapshot,
     targetPremium: number,
+    sourcePremiumFallback?: number,
   ): EndorsementCalculationResult {
     const hasPaidReceipts =
       policy.recibos &&
@@ -126,7 +128,13 @@ export class CalculationEngineService {
         ? policy.recibos.some((r: any) => r.Status_Rec === 'Cobrado')
         : true;
 
-    const currentPremium = hasPaidReceipts ? policy.annualPremium : 0;
+    let currentPremium = hasPaidReceipts ? policy.annualPremium : 0;
+    
+    // Si la prima comercial anual de origen de la póliza es 0, usar la del tarifario como fallback
+    if (currentPremium === 0 && sourcePremiumFallback) {
+      currentPremium = sourcePremiumFallback;
+    }
+
     const daysRemaining = Math.max(0, policy.daysRemaining);
     const annualDifference = targetPremium - currentPremium;
 

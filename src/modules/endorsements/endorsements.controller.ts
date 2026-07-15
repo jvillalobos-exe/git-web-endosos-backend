@@ -499,10 +499,17 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
       );
     }
 
+    const sourcePremiumFallback = this.calculationEngine.getPremiumFromTariff(
+      product.tariff,
+      route.sourcePlanCode,
+      policy.segmentCode,
+    );
+
     const calculation = this.calculationEngine.calculateEndorsement(
       route,
       policy,
       targetPremium,
+      sourcePremiumFallback,
     );
 
     return { policyId: dto.policyId, routeId: dto.routeId, calculation };
@@ -598,7 +605,7 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     }
 
     // Redondear a 2 decimales
-    amountVes = 5; // Temporalmente en 5 para pruebas de pago
+    amountVes = 5; // Forzado temporalmente en 5bs para pruebas reales de pago móvil
 
     // 2. Realizar petición de delegación de SSO
     const ssoKey = process.env.SSO_KEY || 'b72c877b3f2841c1989191ac17a46b19ec64f993a97102ac6451b759f284f5ba';
