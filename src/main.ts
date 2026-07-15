@@ -93,14 +93,12 @@ Este motor implementa arquitectura hexagonal (Ports & Adapters):
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    const swaggerPath = process.env.SWAGGER_PATH ?? 'api';
+    const swaggerPath = process.env.SWAGGER_PATH ?? 'endosos-apidocs';
     SwaggerModule.setup(swaggerPath, app, document, {
       swaggerOptions: {
         persistAuthorization: true,
         displayRequestDuration: true,
       },
-      customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
-      customJs: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.js',
     });
 
     logger.log(
