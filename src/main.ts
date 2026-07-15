@@ -93,7 +93,7 @@ Este motor implementa arquitectura hexagonal (Ports & Adapters):
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    const swaggerPath = process.env.SWAGGER_PATH ?? 'endosos-apidocs';
+    const swaggerPath = 'endosos-apidocs';
     SwaggerModule.setup(swaggerPath, app, document, {
       swaggerOptions: {
         persistAuthorization: true,
