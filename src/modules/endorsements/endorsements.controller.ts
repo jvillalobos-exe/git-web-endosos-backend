@@ -375,6 +375,42 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
   })
   async getPaymentSession(@Body() dto: PaymentSessionDto) {
     const { policyId, amount, currency, concept } = dto;
+    
+    // =========================================================================
+    // TODO: REVERTIR ESTOS CAMBIOS CUANDO SE ESTABILICE EL MÓDULO DE PAGOS
+    // Cambiar SIMULATE_PAYMENT a false para reactivar la pasarela de pagos real.
+    // =========================================================================
+    const SIMULATE_PAYMENT = true; 
+    
+    if (SIMULATE_PAYMENT) {
+      console.log(`[SIMULACIÓN PAGO] Cortocircuitando pasarela externa para policyId=${policyId}`);
+      
+      const reference = 'SIMULADO-' + Date.now();
+      const message = 'Simulación de cobro exitoso para pruebas de asientos contables';
+      
+      // Ejecutar el callback de pago exitoso en segundo plano
+      const result = await this.processPaymentCallback.execute({
+        policyId,
+        isSuccess: true,
+        reference,
+        message,
+      });
+      
+      const finalStatus = result.status || 'success';
+      
+      // Registrar el estado en el mapa temporal de statuses
+      this.paymentStatuses.set(policyId, { status: finalStatus, reference, message });
+      
+      // URL local para que el front redirija y cierre la pantalla de pago
+      const redirectUrl = `/api/endorsements/payment-callback?policyId=${encodeURIComponent(policyId)}&status=${finalStatus}&reference=${reference}&message=${encodeURIComponent(message)}`;
+      
+      return {
+        success: true,
+        redirect_url: redirectUrl,
+      };
+    }
+    // =========================================================================
+
     let amountVes = amount;
 
     // 1. Obtener tasa BCV si la póliza está en USD
