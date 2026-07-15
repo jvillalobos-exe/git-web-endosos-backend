@@ -56,7 +56,6 @@ const TENANT_HEADER = {
   schema: { type: 'string', format: 'uuid' },
 };
 
-@ApiTags('Endosos')
 @ApiHeader(TENANT_HEADER)
 @UseGuards(TenantGuard)
 @Controller('endorsements')
@@ -76,6 +75,7 @@ export class EndorsementsController {
 
   // ─── POST /endorsements ──────────────────────────────────────────────────
 
+  @ApiTags('Endosos')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -128,6 +128,7 @@ Flujo completo de emisión de endoso:
 
   // ─── GET /endorsements ───────────────────────────────────────────────────
 
+  @ApiTags('Endosos')
   @Get()
   @ApiOperation({
     summary: 'Listar endosos del tenant',
@@ -184,6 +185,7 @@ Flujo completo de emisión de endoso:
 
   // ─── GET /endorsements/dashboard/stats ───────────────────────────────────
 
+  @ApiTags('Endosos')
   @Get('dashboard/stats')
   @ApiOperation({ summary: 'Obtener estadísticas agregadas para el dashboard' })
   @ApiResponse({ status: 200, description: 'Estadísticas agregadas' })
@@ -192,7 +194,8 @@ Flujo completo de emisión de endoso:
   }
 
   // ─── GET /endorsements/payment-status/:policyId ──────────────────────────
-
+  
+  @ApiTags('Pagos')
   @Get('payment-status/:policyId')
   @ApiOperation({
     summary: 'Consultar estado del pago para una póliza (Polling)',
@@ -214,7 +217,8 @@ Flujo completo de emisión de endoso:
   }
 
   // ─── GET /endorsements/payment-callback ──────────────────────────────────
-
+  
+  @ApiTags('Pagos')
   @Get('payment-callback')
   @ApiOperation({
     summary: 'Página de retorno tras finalizar el pago (Redirect)',
@@ -350,6 +354,7 @@ Flujo completo de emisión de endoso:
 
   // ─── GET /endorsements/:id ───────────────────────────────────────────────
 
+  @ApiTags('Endosos')
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un endoso por ID' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
@@ -368,6 +373,7 @@ Flujo completo de emisión de endoso:
 
   // ─── GET /endorsements/:id/audit ─────────────────────────────────────────
 
+  @ApiTags('Endosos')
   @Get(':id/audit')
   @ApiOperation({ summary: 'Obtener la traza de auditoría de un endoso' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
@@ -386,6 +392,7 @@ Flujo completo de emisión de endoso:
 
   // ─── POST /endorsements/evaluate ─────────────────────────────────────────
 
+  @ApiTags('Endosos')
   @Post('evaluate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -428,6 +435,7 @@ Usado en el Paso 3 del wizard (Catálogo) para mostrar el semáforo de disponibi
 
   // ─── POST /endorsements/calculate ────────────────────────────────────────
 
+  @ApiTags('Endosos')
   @Post('calculate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -516,7 +524,8 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
   }
 
   // ─── POST /endorsements/payment-session ──────────────────────────────────
-
+  
+  @ApiTags('Pagos')
   @Post('payment-session')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -661,7 +670,8 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
   }
 
   // ─── POST /endorsements/payment-callback ─────────────────────────────────
-
+  
+  @ApiTags('Pagos')
   @Post('payment-callback')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

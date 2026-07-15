@@ -84,6 +84,7 @@ Este motor implementa arquitectura hexagonal (Ports & Adapters):
         'X-Tenant-Id',
       )
       .addTag('Endosos', 'Operaciones de emisión y consulta de endosos')
+      .addTag('Pagos', 'Operaciones de pago y callback de pasarela')
       .addTag('Pólizas', 'Consulta de pólizas al Core del asegurador')
       .addTag(
         'Configuración de Tenants',

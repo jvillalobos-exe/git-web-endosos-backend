@@ -118,7 +118,7 @@ export class CoreIntegrationService {
 
     try {
       const response = await fetch(
-        `${CORE_API_BASE_URL}/api/v1/external/collection/collect`,
+        `${CORE_API_BASE_URL}/api/v1/collection-automatic/collect`,
         {
           method: 'POST',
           headers: {

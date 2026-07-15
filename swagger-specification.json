@@ -1,0 +1,1014 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/endosos-services/endorsements": {
+      "post": {
+        "description": "\nFlujo completo de emisión de endoso:\n1. Consulta la póliza al Core (adaptador configurado)\n2. Evalúa las reglas de elegibilidad del tenant\n3. Calcula el costo según la ruta configurada\n4. Persiste en transacción atómica (con auditoría)\n5. Retorna el endoso con su estado final\n\n**Estados posibles de respuesta:**\n- `EMITTED`: Endoso emitido directamente (sin pago ni aprobación)\n- `PENDING_PAYMENT`: Endoso requiere pago previo\n- `PENDING_APPROVAL`: Endoso enviado a flujo de aprobación manual\n    ",
+        "operationId": "EndorsementsController_create",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEndorsementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Endoso creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "id": "uuid-del-endoso",
+                    "policyId": "POL-001",
+                    "status": "EMITTED",
+                    "endorsementNumber": "END-2025-000001",
+                    "calculation": {
+                      "proratedAmount": 87.5,
+                      "totalCharge": 91,
+                      "formula": "(650 - 450) / 365 × 160 días = 87.67"
+                    },
+                    "emittedAt": "2025-01-15T14:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos o reglas bloqueantes"
+          },
+          "404": {
+            "description": "Póliza o tenant no encontrado"
+          }
+        },
+        "summary": "Crear y emitir un endoso",
+        "tags": [
+          "Endorsements",
+          "Endosos"
+        ]
+      },
+      "get": {
+        "description": "Retorna los endosos del tenant activo con filtros y paginación.",
+        "operationId": "EndorsementsController_findAll",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "policyId",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por póliza",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "DRAFT",
+                "PENDING_PAYMENT",
+                "PENDING_APPROVAL",
+                "EMITTED",
+                "REJECTED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "endorsementTypeId",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por tipo de endoso",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por texto de búsqueda",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada de endosos"
+          }
+        },
+        "summary": "Listar endosos del tenant",
+        "tags": [
+          "Endorsements",
+          "Endosos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/dashboard/stats": {
+      "get": {
+        "operationId": "EndorsementsController_getDashboardStats",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadísticas agregadas"
+          }
+        },
+        "summary": "Obtener estadísticas agregadas para el dashboard",
+        "tags": [
+          "Endorsements",
+          "Endosos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/payment-status/{policyId}": {
+      "get": {
+        "description": "Devuelve el estado actual de la transacción del pago. Ideal para verificar constantemente mediante polling.",
+        "operationId": "EndorsementsController_paymentStatus",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "policyId",
+            "required": true,
+            "in": "path",
+            "description": "ID o número de la póliza",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Consultar estado del pago para una póliza (Polling)",
+        "tags": [
+          "Endorsements",
+          "Pagos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/payment-callback": {
+      "get": {
+        "description": "Registra el resultado del pago y renderiza una interfaz para cerrar la ventana del pago.",
+        "operationId": "EndorsementsController_handlePaymentCallbackGet",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "policyId",
+            "required": true,
+            "in": "query",
+            "description": "ID de la póliza",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "description": "success o failed",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference",
+            "required": false,
+            "in": "query",
+            "description": "Referencia del pago",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "message",
+            "required": false,
+            "in": "query",
+            "description": "Mensaje",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Página de retorno tras finalizar el pago (Redirect)",
+        "tags": [
+          "Endorsements",
+          "Pagos"
+        ]
+      },
+      "post": {
+        "description": "Recibe el estado final del pago y lo almacena temporalmente para que el cliente lo consulte.",
+        "operationId": "EndorsementsController_handlePaymentCallbackPost",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "policyId": {
+                    "type": "string",
+                    "description": "ID de la póliza asociada al pago"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "success",
+                      "failed"
+                    ],
+                    "description": "Estado del pago"
+                  },
+                  "reference": {
+                    "type": "string",
+                    "description": "Referencia de la transacción"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Mensaje adicional"
+                  }
+                },
+                "required": [
+                  "policyId",
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Recibir confirmación del pago desde la pasarela (Webhook)",
+        "tags": [
+          "Endorsements",
+          "Pagos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/{id}": {
+      "get": {
+        "operationId": "EndorsementsController_findOne",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Endoso encontrado"
+          },
+          "404": {
+            "description": "Endoso no encontrado"
+          }
+        },
+        "summary": "Obtener un endoso por ID",
+        "tags": [
+          "Endorsements",
+          "Endosos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/{id}/audit": {
+      "get": {
+        "operationId": "EndorsementsController_getAuditLogs",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Traza de auditoría"
+          },
+          "404": {
+            "description": "Endoso no encontrado"
+          }
+        },
+        "summary": "Obtener la traza de auditoría de un endoso",
+        "tags": [
+          "Endorsements",
+          "Endosos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/evaluate": {
+      "post": {
+        "description": "\nEvalúa las reglas sin crear el endoso.\nRetorna la disponibilidad de TODOS los tipos de endoso para la póliza y canal indicados.\nUsado en el Paso 3 del wizard (Catálogo) para mostrar el semáforo de disponibilidad.\n    ",
+        "operationId": "EndorsementsController_evaluate",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateRulesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado de evaluación de reglas por tipo de endoso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "policyId": "POL-001",
+                    "channelId": "backoffice",
+                    "availabilities": [
+                      {
+                        "endorsementTypeId": "plan-increment",
+                        "status": "available",
+                        "blockingRules": [],
+                        "warningRules": []
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Pre-evaluar reglas de elegibilidad",
+        "tags": [
+          "Endorsements",
+          "Endosos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/calculate": {
+      "post": {
+        "description": "\nCalcula el costo financiero sin crear el endoso.\nUsado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.\n    ",
+        "operationId": "EndorsementsController_calculate",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculateEndorsementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado del cálculo financiero"
+          }
+        },
+        "summary": "Pre-calcular el costo de un endoso",
+        "tags": [
+          "Endorsements",
+          "Endosos"
+        ]
+      }
+    },
+    "/endosos-services/endorsements/payment-session": {
+      "post": {
+        "description": "Delega la autenticación y devuelve el redirect_url para la pantalla de pagos.",
+        "operationId": "EndorsementsController_getPaymentSession",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora). Ej: a1b2c3d4-...",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión de pago SSO generada exitosamente. Contiene la URL del checkout.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "redirect_url": {
+                      "type": "string",
+                      "example": "https://cierrelmds.exelixitech.com/pagos?token=eyJhbGciOi..."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Generar sesión de pago SSO en la pasarela externa",
+        "tags": [
+          "Endorsements",
+          "Pagos"
+        ]
+      }
+    },
+    "/endosos-services/policies/{policyId}": {
+      "get": {
+        "description": "\nConsulta una póliza al Core del asegurador via el adaptador configurado.\nLa respuesta es un PolicySnapshot normalizado al formato del Motor.\n    ",
+        "operationId": "PoliciesController_findById",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "policyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "POL-001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot de la póliza",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "policyId": "POL-001",
+                    "insuredName": "María García Rodríguez",
+                    "planCode": "BASIC",
+                    "planLabel": "Plan Básico",
+                    "annualPremium": 450,
+                    "daysRemaining": 180,
+                    "status": "active",
+                    "debtDays": 0,
+                    "openClaims": 0
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Póliza no encontrada"
+          }
+        },
+        "summary": "Consultar póliza por ID",
+        "tags": [
+          "Pólizas"
+        ]
+      }
+    },
+    "/endosos-services/policies": {
+      "get": {
+        "description": "Busca pólizas con filtros opcionales (para el módulo Portfolio/Lotes).",
+        "operationId": "PoliciesController_findMany",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "insuredName",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por nombre del asegurado",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "branchCode",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por ramo (AUTO, VIDA, etc.)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "active",
+                "expired",
+                "suspended",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "cedula",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por cédula del asegurado",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "planCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pólizas"
+          }
+        },
+        "summary": "Listar pólizas del portfolio",
+        "tags": [
+          "Pólizas"
+        ]
+      }
+    },
+    "/endosos-services/policies/planes": {
+      "post": {
+        "description": "Consulta los planes disponibles en el Core de La Mundial de Seguros.",
+        "operationId": "PoliciesController_getPlanes",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant (aseguradora)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "centidad": {
+                    "type": "string",
+                    "example": "P"
+                  },
+                  "citem": {
+                    "type": "string",
+                    "example": "205"
+                  },
+                  "cusuario": {
+                    "type": "number",
+                    "example": 25221952
+                  },
+                  "cramo": {
+                    "type": "number",
+                    "example": 18
+                  },
+                  "ctipo": {
+                    "type": "number",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listado de planes del Core"
+          }
+        },
+        "summary": "Consultar catálogo de planes de la API externa",
+        "tags": [
+          "Pólizas"
+        ]
+      }
+    },
+    "/endosos-services/tenants/{id}/config": {
+      "get": {
+        "description": "\nRetorna la configuración completa de la aseguradora como JSONB.\nIncluye: endorsementTypes, branches, workflows, channels, auditSchema, etc.\n    ",
+        "operationId": "TenantsController_getConfig",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuración del tenant (InsurerConfig)"
+          },
+          "404": {
+            "description": "Configuración no encontrada"
+          }
+        },
+        "summary": "Obtener configuración del tenant",
+        "tags": [
+          "Configuración de Tenants"
+        ]
+      },
+      "put": {
+        "description": "\nActualiza la configuración completa del tenant en JSONB.\nEsto conecta el Módulo Configurador del frontend al backend.\nLa versión se incrementa automáticamente.\n    ",
+        "operationId": "TenantsController_updateConfig",
+        "parameters": [
+          {
+            "name": "X-Tenant-Id",
+            "in": "header",
+            "description": "UUID del tenant",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantConfigDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuración actualizada"
+          }
+        },
+        "summary": "Actualizar configuración del tenant",
+        "tags": [
+          "Configuración de Tenants"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Motor Universal de Endosos — API",
+    "description": "## API REST para el Motor Universal de Endosos\n\n### Autenticación Multitenancy\nTodos los endpoints requieren el header **X-Tenant-Id** con el UUID de la aseguradora.\n\n### Arquitectura\nEste motor implementa arquitectura hexagonal (Ports & Adapters):\n- **IPolicyPort**: Adaptador para consultar pólizas del Core del asegurador\n- **ICatalogPort**: Adaptador para catálogos de coberturas\n- La configuración específica por aseguradora vive en JSONB (`tenant_configs.schema`)\n\n### Endpoints disponibles\n- `POST /api/endorsements` — Crear y emitir endoso (transaccional)\n- `GET /api/endorsements` — Listar endosos con filtros\n- `POST /api/endorsements/evaluate` — Pre-evaluar reglas\n- `POST /api/endorsements/calculate` — Pre-calcular costo\n- `GET /api/policies/:id` — Consultar póliza al Core\n- `GET /api/tenants/:id/config` — Obtener configuración del tenant\n- `PUT /api/tenants/:id/config` — Actualizar configuración del tenant",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Endosos",
+      "description": "Operaciones de emisión y consulta de endosos"
+    },
+    {
+      "name": "Pagos",
+      "description": "Operaciones de pago y callback de pasarela"
+    },
+    {
+      "name": "Pólizas",
+      "description": "Consulta de pólizas al Core del asegurador"
+    },
+    {
+      "name": "Configuración de Tenants",
+      "description": "Gestión de la configuración por aseguradora"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "X-Tenant-Id": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Tenant-Id",
+        "description": "UUID del tenant (aseguradora)"
+      }
+    },
+    "schemas": {
+      "CreateEndorsementDto": {
+        "type": "object",
+        "properties": {
+          "policyId": {
+            "type": "string",
+            "description": "ID de la póliza en el sistema del asegurador",
+            "example": "POL-001",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "endorsementTypeId": {
+            "type": "string",
+            "description": "ID del tipo de endoso según la configuración del tenant",
+            "example": "plan-increment",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "routeId": {
+            "type": "string",
+            "description": "ID de la ruta de endoso (para endosos cuantitativos)",
+            "example": "route-basic-to-plata"
+          },
+          "channelId": {
+            "type": "string",
+            "description": "ID del canal de venta (backoffice, digital, agencia, etc.)",
+            "example": "backoffice",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "effectiveDate": {
+            "type": "string",
+            "description": "Fecha efectiva del endoso (ISO 8601: YYYY-MM-DD)",
+            "example": "2025-01-15",
+            "format": "date"
+          },
+          "formData": {
+            "type": "object",
+            "description": "Datos del formulario dinámico. Campos según el tipo de endoso.",
+            "example": {
+              "newPlanCode": "PLATA",
+              "reason": "Mejora de cobertura"
+            }
+          }
+        },
+        "required": [
+          "policyId",
+          "endorsementTypeId",
+          "channelId",
+          "effectiveDate"
+        ]
+      },
+      "EvaluateRulesDto": {
+        "type": "object",
+        "properties": {
+          "policyId": {
+            "type": "string",
+            "description": "ID de la póliza",
+            "example": "POL-001"
+          },
+          "channelId": {
+            "type": "string",
+            "description": "ID del canal",
+            "example": "backoffice"
+          }
+        },
+        "required": [
+          "policyId",
+          "channelId"
+        ]
+      },
+      "CalculateEndorsementDto": {
+        "type": "object",
+        "properties": {
+          "policyId": {
+            "type": "string",
+            "description": "ID de la póliza",
+            "example": "POL-001"
+          },
+          "routeId": {
+            "type": "string",
+            "description": "ID de la ruta de endoso",
+            "example": "route-basic-to-plata"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "description": "Fecha efectiva del endoso",
+            "example": "2025-01-15"
+          }
+        },
+        "required": [
+          "policyId",
+          "routeId",
+          "effectiveDate"
+        ]
+      },
+      "PaymentSessionDto": {
+        "type": "object",
+        "properties": {
+          "policyId": {
+            "type": "string",
+            "description": "ID de la póliza",
+            "example": "POL-001"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Monto a cobrar",
+            "example": 100
+          },
+          "currency": {
+            "type": "string",
+            "description": "Moneda (USD o VES)",
+            "example": "USD"
+          },
+          "concept": {
+            "type": "string",
+            "description": "Concepto de cobro",
+            "example": "Diferencia de prima"
+          }
+        },
+        "required": [
+          "policyId",
+          "amount",
+          "currency"
+        ]
+      },
+      "UpdateTenantConfigDto": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "object",
+            "description": "Configuración completa de la aseguradora (InsurerConfig)",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "schema"
+        ]
+      }
+    }
+  }
+}
