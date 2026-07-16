@@ -122,7 +122,7 @@ export class CalculationEngineService {
     sourcePremiumFallback?: number,
   ): EndorsementCalculationResult {
     let currentPremium = policy.annualPremium > 0 ? policy.annualPremium : 0;
-    
+
     // Si la prima comercial anual de origen de la póliza es 0, usar la del tarifario como fallback
     if (currentPremium === 0 && sourcePremiumFallback) {
       currentPremium = sourcePremiumFallback;

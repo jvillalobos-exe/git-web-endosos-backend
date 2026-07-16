@@ -60,7 +60,10 @@ const TENANT_HEADER = {
 @UseGuards(TenantGuard)
 @Controller('endorsements')
 export class EndorsementsController {
-  private readonly paymentStatuses = new Map<string, { status: string; reference?: string; message?: string }>();
+  private readonly paymentStatuses = new Map<
+    string,
+    { status: string; reference?: string; message?: string }
+  >();
 
   constructor(
     private readonly createEndorsement: CreateEndorsementUseCase,
@@ -156,7 +159,12 @@ Flujo completo de emisión de endoso:
     required: false,
     description: 'Filtrar por tipo de endoso',
   })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Filtrar por texto de búsqueda' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Filtrar por texto de búsqueda',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
   @ApiResponse({ status: 200, description: 'Lista paginada de endosos' })
@@ -194,12 +202,13 @@ Flujo completo de emisión de endoso:
   }
 
   // ─── GET /endorsements/payment-status/:policyId ──────────────────────────
-  
+
   @ApiTags('Pagos')
   @Get('payment-status/:policyId')
   @ApiOperation({
     summary: 'Consultar estado del pago para una póliza (Polling)',
-    description: 'Devuelve el estado actual de la transacción del pago. Ideal para verificar constantemente mediante polling.',
+    description:
+      'Devuelve el estado actual de la transacción del pago. Ideal para verificar constantemente mediante polling.',
   })
   @ApiParam({ name: 'policyId', description: 'ID o número de la póliza' })
   paymentStatus(@Param('policyId') policyId: string) {
@@ -217,23 +226,32 @@ Flujo completo de emisión de endoso:
   }
 
   // ─── GET /endorsements/payment-callback ──────────────────────────────────
-  
+
   @ApiTags('Pagos')
   @Get('payment-callback')
   @ApiOperation({
     summary: 'Página de retorno tras finalizar el pago (Redirect)',
-    description: 'Registra el resultado del pago y renderiza una interfaz para cerrar la ventana del pago.',
+    description:
+      'Registra el resultado del pago y renderiza una interfaz para cerrar la ventana del pago.',
   })
-  @ApiQuery({ name: 'policyId', required: true, description: 'ID de la póliza' })
+  @ApiQuery({
+    name: 'policyId',
+    required: true,
+    description: 'ID de la póliza',
+  })
   @ApiQuery({ name: 'status', required: true, description: 'success o failed' })
-  @ApiQuery({ name: 'reference', required: false, description: 'Referencia del pago' })
+  @ApiQuery({
+    name: 'reference',
+    required: false,
+    description: 'Referencia del pago',
+  })
   @ApiQuery({ name: 'message', required: false, description: 'Mensaje' })
   async handlePaymentCallbackGet(
     @Query('policyId') policyId: string,
     @Query('status') status: string,
     @Query('reference') reference: string,
     @Query('message') message: string,
-    @Res() res: any
+    @Res() res: any,
   ) {
     const isSuccessInput = status === 'success';
 
@@ -246,7 +264,11 @@ Flujo completo de emisión de endoso:
 
     const finalStatus = result.status || status;
 
-    this.paymentStatuses.set(policyId, { status: finalStatus, reference, message });
+    this.paymentStatuses.set(policyId, {
+      status: finalStatus,
+      reference,
+      message,
+    });
 
     const isSuccess = finalStatus === 'success';
     const htmlContent = `
@@ -338,9 +360,12 @@ Flujo completo de emisión de endoso:
           </div>
           <h1>Pago ${isSuccess ? 'Procesado con Éxito' : 'No Completado'}</h1>
           <p>
-            ${isSuccess 
-              ? 'Tu pago se ha registrado correctamente en nuestro sistema. El proceso de endoso continuará automáticamente en la plataforma principal.' 
-              : message || 'Hubo un inconveniente al procesar tu pago. Por favor, intenta de nuevo.'}
+            ${
+              isSuccess
+                ? 'Tu pago se ha registrado correctamente en nuestro sistema. El proceso de endoso continuará automáticamente en la plataforma principal.'
+                : message ||
+                  'Hubo un inconveniente al procesar tu pago. Por favor, intenta de nuevo.'
+            }
           </p>
           <button class="btn" onclick="window.close()">Cerrar Ventana</button>
         </div>
@@ -524,43 +549,49 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
   }
 
   // ─── POST /endorsements/payment-session ──────────────────────────────────
-  
+
   @ApiTags('Pagos')
   @Post('payment-session')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Generar sesión de pago SSO en la pasarela externa',
-    description: 'Delega la autenticación y devuelve el redirect_url para la pantalla de pagos.',
+    description:
+      'Delega la autenticación y devuelve el redirect_url para la pantalla de pagos.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Sesión de pago SSO generada exitosamente. Contiene la URL del checkout.',
+    description:
+      'Sesión de pago SSO generada exitosamente. Contiene la URL del checkout.',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: true },
-        redirect_url: { 
-          type: 'string', 
-          example: 'https://cierrelmds.exelixitech.com/pagos?token=eyJhbGciOi...' 
+        redirect_url: {
+          type: 'string',
+          example:
+            'https://cierrelmds.exelixitech.com/pagos?token=eyJhbGciOi...',
         },
       },
     },
   })
   async getPaymentSession(@Body() dto: PaymentSessionDto) {
     const { policyId, amount, currency, concept } = dto;
-    
+
     // =========================================================================
     // TODO: REVERTIR ESTOS CAMBIOS CUANDO SE ESTABILICE EL MÓDULO DE PAGOS
     // Cambiar SIMULATE_PAYMENT a false para reactivar la pasarela de pagos real.
     // =========================================================================
-    const SIMULATE_PAYMENT = false; 
-    
+    const SIMULATE_PAYMENT = false;
+
     if (SIMULATE_PAYMENT) {
-      console.log(`[SIMULACIÓN PAGO] Cortocircuitando pasarela externa para policyId=${policyId}`);
-      
+      console.log(
+        `[SIMULACIÓN PAGO] Cortocircuitando pasarela externa para policyId=${policyId}`,
+      );
+
       const reference = 'SIMULADO-' + Date.now();
-      const message = 'Simulación de cobro exitoso para pruebas de asientos contables';
-      
+      const message =
+        'Simulación de cobro exitoso para pruebas de asientos contables';
+
       // Ejecutar el callback de pago exitoso en segundo plano
       const result = await this.processPaymentCallback.execute({
         policyId,
@@ -568,23 +599,29 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
         reference,
         message,
       });
-      
+
       const finalStatus = result.status || 'success';
-      
+
       // Registrar el estado en el mapa temporal de statuses
-      this.paymentStatuses.set(policyId, { status: finalStatus, reference, message });
-      
+      this.paymentStatuses.set(policyId, {
+        status: finalStatus,
+        reference,
+        message,
+      });
+
       // Obtener URL absoluta del callback a partir de las variables de entorno
-      const notifyUrl = process.env.NOTIFY_URL || 'http://localhost:3005/api/endorsements/payment-callback';
-      
+      const notifyUrl =
+        process.env.NOTIFY_URL ||
+        'http://localhost:3005/api/endorsements/payment-callback';
+
       const urlObj = new URL(notifyUrl);
       urlObj.searchParams.set('policyId', policyId);
       urlObj.searchParams.set('status', finalStatus);
       urlObj.searchParams.set('reference', reference);
       urlObj.searchParams.set('message', message);
-      
+
       const redirectUrl = urlObj.toString();
-      
+
       return {
         success: true,
         redirect_url: redirectUrl,
@@ -604,11 +641,16 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
           const rate = bcvData?.ptasamon || bcvData?.[0]?.ptasamon;
           if (rate) {
             amountVes = amount * parseFloat(rate);
-            console.log(`Conversión de moneda: ${amount} USD a tasa BCV ${rate} = ${amountVes} VES`);
+            console.log(
+              `Conversión de moneda: ${amount} USD a tasa BCV ${rate} = ${amountVes} VES`,
+            );
           }
         }
       } catch (err) {
-        console.error('Error al obtener la tasa BCV de Core, usando tasa de fallback 47.0:', err);
+        console.error(
+          'Error al obtener la tasa BCV de Core, usando tasa de fallback 47.0:',
+          err,
+        );
         amountVes = amount * 47.0; // Fallback razonable si el Core está caído
       }
     }
@@ -617,10 +659,16 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     amountVes = 5; // Forzado temporalmente en 5bs para pruebas reales de pago móvil
 
     // 2. Realizar petición de delegación de SSO
-    const ssoKey = process.env.SSO_KEY || 'b72c877b3f2841c1989191ac17a46b19ec64f993a97102ac6451b759f284f5ba';
-    const ssoUrl = process.env.SSO_URL || 'https://cierrelmds.exelixitech.com/nexus-api/api/auth/sso-delegate';
+    const ssoKey =
+      process.env.SSO_KEY ||
+      'b72c877b3f2841c1989191ac17a46b19ec64f993a97102ac6451b759f284f5ba';
+    const ssoUrl =
+      process.env.SSO_URL ||
+      'https://cierrelmds.exelixitech.com/nexus-api/api/auth/sso-delegate';
 
-    const notifyUrl = process.env.NOTIFY_URL || 'http://localhost:3005/api/endorsements/payment-callback';
+    const notifyUrl =
+      process.env.NOTIFY_URL ||
+      'http://localhost:3005/api/endorsements/payment-callback';
 
     const payload = {
       target: 'pagos',
@@ -658,49 +706,69 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new BadRequestException(`Error delegando sesión de pago SSO: ${errorText}`);
+        throw new BadRequestException(
+          `Error delegando sesión de pago SSO: ${errorText}`,
+        );
       }
 
       const data = await response.json();
       return data; // Contiene redirect_url, success, empresa, modulo, etc.
     } catch (err: any) {
       if (err instanceof BadRequestException) throw err;
-      throw new BadRequestException(`Fallo de conexión al pasarela de pago: ${err.message}`);
+      throw new BadRequestException(
+        `Fallo de conexión al pasarela de pago: ${err.message}`,
+      );
     }
   }
 
   // ─── POST /endorsements/payment-callback ─────────────────────────────────
-  
+
   @ApiTags('Pagos')
   @Post('payment-callback')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Recibir confirmación del pago desde la pasarela (Webhook)',
-    description: 'Recibe el estado final del pago y lo almacena temporalmente para que el cliente lo consulte.',
+    description:
+      'Recibe el estado final del pago y lo almacena temporalmente para que el cliente lo consulte.',
   })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        policyId: { type: 'string', description: 'ID de la póliza asociada al pago' },
-        status: { type: 'string', enum: ['success', 'failed'], description: 'Estado del pago' },
-        reference: { type: 'string', description: 'Referencia de la transacción' },
+        policyId: {
+          type: 'string',
+          description: 'ID de la póliza asociada al pago',
+        },
+        status: {
+          type: 'string',
+          enum: ['success', 'failed'],
+          description: 'Estado del pago',
+        },
+        reference: {
+          type: 'string',
+          description: 'Referencia de la transacción',
+        },
         message: { type: 'string', description: 'Mensaje adicional' },
       },
       required: ['policyId', 'status'],
     },
   })
-  async handlePaymentCallbackPost(
-    @Body() payload: any
-  ) {
-    const policyId = payload.idOperacion || payload.payload?.idOperacion || payload.policyId;
-    const isSuccess = payload.status === 'ok' && payload.paymentVerified === true;
+  async handlePaymentCallbackPost(@Body() payload: any) {
+    const policyId =
+      payload.idOperacion || payload.payload?.idOperacion || payload.policyId;
+    const isSuccess =
+      payload.status === 'ok' && payload.paymentVerified === true;
     const status = isSuccess ? 'success' : 'failed';
     const reference = payload.payment?.reference || '';
-    const message = payload.message || payload.payment?.message || 'Error en validación de pago';
+    const message =
+      payload.message ||
+      payload.payment?.message ||
+      'Error en validación de pago';
 
     if (!policyId) {
-      throw new BadRequestException('ID de operación (idOperacion) no especificado en el callback.');
+      throw new BadRequestException(
+        'ID de operación (idOperacion) no especificado en el callback.',
+      );
     }
 
     const result = await this.processPaymentCallback.execute({
@@ -712,8 +780,11 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
 
     const finalStatus = result.status || status;
 
-    this.paymentStatuses.set(policyId, { status: finalStatus, reference, message });
+    this.paymentStatuses.set(policyId, {
+      status: finalStatus,
+      reference,
+      message,
+    });
     return { success: result.success, message: result.message };
   }
-
 }

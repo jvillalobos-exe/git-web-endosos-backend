@@ -156,7 +156,10 @@ export class PaymentSessionDto {
   @IsNotEmpty()
   currency: string;
 
-  @ApiPropertyOptional({ description: 'Concepto de cobro', example: 'Diferencia de prima' })
+  @ApiPropertyOptional({
+    description: 'Concepto de cobro',
+    example: 'Diferencia de prima',
+  })
   @IsOptional()
   @IsString()
   concept?: string;

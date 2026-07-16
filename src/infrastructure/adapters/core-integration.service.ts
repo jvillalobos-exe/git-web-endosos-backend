@@ -141,8 +141,10 @@ export class CoreIntegrationService {
         );
         return false;
       }
-      
-      this.logger.log(`Payment reported successfully to Core for receipt ${cnrecibo}`);
+
+      this.logger.log(
+        `Payment reported successfully to Core for receipt ${cnrecibo}`,
+      );
       return true;
     } catch (err: any) {
       this.logger.error(`Failed to call Core collection API: ${err.message}`);

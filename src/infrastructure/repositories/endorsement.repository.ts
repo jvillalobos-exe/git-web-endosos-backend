@@ -65,7 +65,12 @@ export class EndorsementRepository implements IEndorsementRepository {
       }),
       ...(filters.search && {
         OR: [
-          { endorsementNumber: { contains: filters.search, mode: 'insensitive' } },
+          {
+            endorsementNumber: {
+              contains: filters.search,
+              mode: 'insensitive',
+            },
+          },
           { policyId: { contains: filters.search, mode: 'insensitive' } },
           {
             formData: {

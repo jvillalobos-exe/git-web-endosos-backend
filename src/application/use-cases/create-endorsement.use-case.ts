@@ -291,10 +291,7 @@ export class CreateEndorsementUseCase {
           dto.effectiveDate,
         );
         if (coreReceipt) {
-          endorsement.setCoreReceipt(
-            coreReceipt.cnrecibo,
-            coreReceipt.crecibo,
-          );
+          endorsement.setCoreReceipt(coreReceipt.cnrecibo, coreReceipt.crecibo);
           await this.endorsementRepo.update(endorsement);
         }
       } catch (err: any) {

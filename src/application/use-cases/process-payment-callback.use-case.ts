@@ -1,4 +1,9 @@
-import { Injectable, Inject, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { ENDORSEMENT_REPOSITORY_TOKEN } from '../../domain/ports/endorsement-repository.port';
 import type { IEndorsementRepository } from '../../domain/ports/endorsement-repository.port';
@@ -44,8 +49,13 @@ export class ProcessPaymentCallbackUseCase {
     });
 
     if (!record) {
-      this.logger.warn(`No pending payment endorsement found for policy ${policyId}`);
-      return { success: false, message: 'No se encontró endoso pendiente de pago para esta póliza.' };
+      this.logger.warn(
+        `No pending payment endorsement found for policy ${policyId}`,
+      );
+      return {
+        success: false,
+        message: 'No se encontró endoso pendiente de pago para esta póliza.',
+      };
     }
 
     // Mapear a entidad de dominio
@@ -70,44 +80,62 @@ export class ProcessPaymentCallbackUseCase {
     });
 
     if (!isSuccess) {
-      this.logger.warn(`Payment failed for endorsement ${endorsement.id}: ${message}`);
+      this.logger.warn(
+        `Payment failed for endorsement ${endorsement.id}: ${message}`,
+      );
       // Mantenemos el estado en PENDING_PAYMENT para permitir reintento de pago
-      return { success: true, status: 'failed', message: 'Se registró el fallo de pago para reintento.' };
+      return {
+        success: true,
+        status: 'failed',
+        message: 'Se registró el fallo de pago para reintento.',
+      };
     }
 
     // 2. Realizar la integración con el Core (anular recibos previos y crear nuevo recibo de endoso en el Core)
     const calc = endorsement.calculation as any;
-    let coreReceipt: { cnrecibo: string; crecibo: number } | undefined = undefined;
+    let coreReceipt: { cnrecibo: string; crecibo: number } | undefined =
+      undefined;
 
     if (calc && endorsement.routeId) {
       try {
-        const policy = await this.policyPort.findByPolicyId(endorsement.tenantId, endorsement.policyId);
+        const policy = await this.policyPort.findByPolicyId(
+          endorsement.tenantId,
+          endorsement.policyId,
+        );
         if (!policy) {
-          throw new BadRequestException(`Póliza "${endorsement.policyId}" no encontrada al procesar el pago.`);
+          throw new BadRequestException(
+            `Póliza "${endorsement.policyId}" no encontrada al procesar el pago.`,
+          );
         }
 
-        const effectiveDate = endorsement.effectiveDate.toISOString().split('T')[0];
-        const integrationResult = await this.coreIntegration.processCoreIntegration(
-          policy,
-          calc,
-          effectiveDate,
-        );
+        const effectiveDate = endorsement.effectiveDate
+          .toISOString()
+          .split('T')[0];
+        const integrationResult =
+          await this.coreIntegration.processCoreIntegration(
+            policy,
+            calc,
+            effectiveDate,
+          );
 
         if (integrationResult) {
           coreReceipt = integrationResult;
           endorsement.setCoreReceipt(coreReceipt.cnrecibo, coreReceipt.crecibo);
         }
       } catch (err: any) {
-        this.logger.error(`Error during Core integration on payment callback: ${err.message}`);
+        this.logger.error(
+          `Error during Core integration on payment callback: ${err.message}`,
+        );
         throw err;
       }
     }
 
     // 3. Transición del endoso local a EMITTED
     // Generar el próximo número de endoso
-    const endorsementNumber = await this.endorsementRepo.generateEndorsementNumber(
-      endorsement.tenantId,
-    );
+    const endorsementNumber =
+      await this.endorsementRepo.generateEndorsementNumber(
+        endorsement.tenantId,
+      );
 
     endorsement.completePayment(endorsementNumber);
     await this.endorsementRepo.update(endorsement);
@@ -139,7 +167,8 @@ export class ProcessPaymentCallbackUseCase {
       return {
         success: true,
         status: 'success',
-        message: 'Endoso emitido con éxito localmente, pero sin recibo contable asociado.',
+        message:
+          'Endoso emitido con éxito localmente, pero sin recibo contable asociado.',
       };
     }
 

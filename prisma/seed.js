@@ -23,12 +23,7 @@ async function main() {
   // 1. Upsert Tenant
   const tenant = await prisma.tenant.upsert({
     where: { id: tenantId },
-    update: {
-      slug: 'la-mundial',
-      name: laMundialConfig.name,
-      shortName: laMundialConfig.shortName,
-      isActive: true,
-    },
+    update: {}, // No sobreescribir datos reales en despliegues sucesivos
     create: {
       id: tenantId,
       slug: 'la-mundial',
@@ -42,9 +37,7 @@ async function main() {
   // 2. Upsert TenantConfig
   const config = await prisma.tenantConfig.upsert({
     where: { tenantId: tenantId },
-    update: {
-      schema: laMundialConfig,
-    },
+    update: {}, // No sobreescribir la configuración del tenant en caliente
     create: {
       tenantId: tenantId,
       schema: laMundialConfig,
