@@ -103,7 +103,7 @@ export class MockPolicyAdapter implements IPolicyPort {
               ) {
                 typedItem.recibos = jsonReceipts.recibosInfo.recibos.map(
                   (r: any) => ({
-                    cnrecibo: r.cnrecibo ? r.cnrecibo.trim() : '',
+                    cnrecibo: r.cnrecibo || '',
                     Status_Rec:
                       r.iestadorec === 'P'
                         ? 'Pendiente'
@@ -372,11 +372,12 @@ export class MockPolicyAdapter implements IPolicyPort {
 
     return {
       policyId: key,
-      cnpoliza:
+      cnpoliza: (
         typedItem.Nro_Poliza ||
         typedItem.cnpoliza ||
         typedItem.Cnpoliza ||
-        (key.includes('-') ? key.split('-')[0] : key),
+        (key.includes('-') ? key.split('-')[0] : key)
+      ).trim(),
       fanopoliza:
         typedItem.fanopol ||
         (key.includes('-')

@@ -11,7 +11,7 @@ export class CoreIntegrationService {
   ): Promise<{ cnrecibo: string; crecibo: number } | void> {
     const pendingReceipts = (policy.recibos ?? [])
       .filter((r: any) => r.Status_Rec === 'Pendiente')
-      .map((r: any) => r.cnrecibo?.trim() || r.crecibo?.toString());
+      .map((r: any) => r.cnrecibo || r.crecibo?.toString());
 
     const CORE_API_BASE_URL =
       process.env.CORE_API_URL ??
@@ -89,7 +89,7 @@ export class CoreIntegrationService {
       const data = await crearRes.json();
       if (data && data.success && data.cnrecibo && data.crecibo) {
         return {
-          cnrecibo: data.cnrecibo.trim(),
+          cnrecibo: data.cnrecibo,
           crecibo: data.crecibo,
         };
       }
