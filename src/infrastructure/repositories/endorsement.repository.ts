@@ -53,7 +53,7 @@ export class EndorsementRepository implements IEndorsementRepository {
     filters: EndorsementFilters = {},
   ): Promise<PaginatedResult<Endorsement>> {
     const page = filters.page ?? 1;
-    const limit = Math.min(filters.limit ?? 20, 100); // Max 100 por página
+    const limit = filters.limit ?? 20;
     const skip = (page - 1) * limit;
 
     const where: Prisma.EndorsementWhereInput = {

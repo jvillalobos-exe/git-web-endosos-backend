@@ -19,7 +19,8 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
 
   // ─── Prefijo Global de API ─────────────────────────────────────────────
-  app.setGlobalPrefix('endosos-services');
+  const apiPrefix = process.env.API_PREFIX ?? 'api';
+  app.setGlobalPrefix(apiPrefix);
 
   // ─── CORS ──────────────────────────────────────────────────────────────
   const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')

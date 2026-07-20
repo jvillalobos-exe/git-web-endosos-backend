@@ -13,6 +13,7 @@ import {
   IsDateString,
   IsObject,
   IsArray,
+  IsNumber,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -135,6 +136,30 @@ export class CalculateEndorsementDto {
   })
   @IsDateString()
   effectiveDate: string;
+
+  @ApiPropertyOptional({
+    description: 'Código de la cobertura seleccionada (ej. CA, PT, PP)',
+    example: 'CA',
+  })
+  @IsOptional()
+  @IsString()
+  selectedCoverage?: string;
+
+  @ApiPropertyOptional({
+    description: 'Suma asegurada activa editada por el usuario',
+    example: 15000,
+  })
+  @IsOptional()
+  @IsNumber()
+  sumInsured?: number;
+
+  @ApiPropertyOptional({
+    description: 'Tasa de cobertura activa editada por el usuario',
+    example: 2.5,
+  })
+  @IsOptional()
+  @IsNumber()
+  coverageRate?: number;
 }
 
 /**

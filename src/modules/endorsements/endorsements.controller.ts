@@ -520,11 +520,16 @@ Usado en el Paso 4 del wizard (Cálculo) para mostrar el desglose financiero.
     }
 
     // 4. Calcular
-    const targetPremium = this.calculationEngine.getPremiumFromTariff(
-      product.tariff,
-      route.targetPlanCode,
-      policy.segmentCode,
-    );
+    let targetPremium = 0;
+    if (dto.sumInsured !== undefined && dto.coverageRate !== undefined) {
+      targetPremium = dto.sumInsured * (dto.coverageRate / 100);
+    } else {
+      targetPremium = this.calculationEngine.getPremiumFromTariff(
+        product.tariff,
+        route.targetPlanCode,
+        policy.segmentCode,
+      );
+    }
 
     if (targetPremium === 0) {
       throw new BadRequestException(

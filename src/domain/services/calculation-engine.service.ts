@@ -139,13 +139,13 @@ export class CalculationEngineService {
       case 'days-remaining':
         // Fórmula estándar de prorrateo: (diferencia_anual / 365) × días_restantes
         proratedAmount = (annualDifference / 365) * daysRemaining;
-        formula = `(${targetPremium} - ${currentPremium}) / 365 × ${daysRemaining} días = ${proratedAmount.toFixed(2)}`;
+        formula = `(${targetPremium.toFixed(2)} - ${currentPremium.toFixed(2)}) / 365 × ${daysRemaining} días = ${proratedAmount.toFixed(2)}`;
         break;
 
       case 'full-difference':
         // Cobra la diferencia anual completa, sin prorratear
         proratedAmount = annualDifference;
-        formula = `Diferencia anual completa: ${targetPremium} - ${currentPremium} = ${proratedAmount.toFixed(2)}`;
+        formula = `Diferencia anual completa: ${targetPremium.toFixed(2)} - ${currentPremium.toFixed(2)} = ${proratedAmount.toFixed(2)}`;
         break;
 
       case 'fixed-fee':

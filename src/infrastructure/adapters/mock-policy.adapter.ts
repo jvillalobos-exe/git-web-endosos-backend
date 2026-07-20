@@ -48,7 +48,7 @@ export class MockPolicyAdapter implements IPolicyPort {
         process.env.CORE_API_URL ||
         'https://qaapisys2000.lamundialdeseguros.com';
       const response = await fetch(
-        `${coreUrl}/api/v1/poliza/searchPolizaOnly`,
+        `${coreUrl}/api/v1/poliza/searchPoliza`,
         {
           method: 'POST',
           headers: {
@@ -56,22 +56,19 @@ export class MockPolicyAdapter implements IPolicyPort {
           },
           body: JSON.stringify({
             cnpoliza: cleanPolicyId,
-            page: 1,
-            steps: 1,
           }),
         },
       );
 
       if (response.ok) {
         const json = await response.json();
-        if (
-          json &&
-          json.status &&
-          json.data &&
-          json.data.list &&
-          json.data.list.length > 0
-        ) {
-          const typedItem = json.data.list[0];
+        if (json && json.status && json.data && json.data.list) {
+          const list = Array.isArray(json.data.list)
+            ? json.data.list
+            : Object.values(json.data.list);
+
+          if (list.length > 0) {
+            const typedItem = list[0];
 
           // 2. Consulta secundaria al endpoint de recibos del Core para poblar la prima
           try {
@@ -131,10 +128,17 @@ export class MockPolicyAdapter implements IPolicyPort {
             );
           }
 
-          return this.mapToSnapshot(policyId, typedItem);
+          const snapshot = this.mapToSnapshot(policyId, typedItem);
+          await this.prisma.policyCache.upsert({
+            where: { policyId: cleanPolicyId },
+            create: { policyId: cleanPolicyId, data: snapshot as any },
+            update: { data: snapshot as any },
+          }).catch(err => console.error('Error writing policy to cache:', err));
+          return snapshot;
         }
       }
-    } catch (error) {
+    }
+  } catch (error) {
       console.error(
         `Error querying policy directly from Core API for ID ${cleanPolicyId}:`,
         error,
@@ -194,11 +198,74 @@ export class MockPolicyAdapter implements IPolicyPort {
 
             const snapshot = this.mapToSnapshot(uniquePolicyId, typedItem);
             mappedPolicies.push(snapshot);
+
+            // Guardar en cache local de forma asíncrona
+            await this.prisma.policyCache.upsert({
+              where: { policyId: uniquePolicyId.trim() },
+              create: { policyId: uniquePolicyId.trim(), data: snapshot as any },
+              update: { data: snapshot as any },
+            }).catch(err => console.error('Error writing batch policy to cache:', err));
           }
           return mappedPolicies;
         }
       } catch (err) {
         console.error('Error fetching policies from external API:', err);
+      }
+    } else {
+      // ─── CONSULTA SIN CEDULA (MÓDULO DE CARTERA/LOTES) ──────────────────────
+      // Leemos de la cache local (índice de pólizas) y consultamos en vivo al Core para cada una
+      try {
+        const cached = await this.prisma.policyCache.findMany();
+        let snapshots: PolicySnapshot[] = [];
+
+        if (cached.length > 0) {
+          // Consultamos en vivo al Core para cada una de las pólizas indexadas
+          const promises = cached.map(async (c) => {
+            try {
+              // findByPolicyId consulta al Core y actualiza la cache automáticamente
+              const fresh = await this.findByPolicyId(_tenantId, c.policyId);
+              return fresh;
+            } catch (err) {
+              console.error(`Error refreshing policy ${c.policyId} from Core in findMany:`, err);
+              return c.data as unknown as PolicySnapshot; // Fallback al JSON de cache si el Core falla
+            }
+          });
+
+          const results = await Promise.all(promises);
+          snapshots = results.filter((s): s is PolicySnapshot => s !== null);
+        } else {
+          // Fallback a demoPortfolios si la base de datos de cache local está vacía
+          console.log('Cache local vacía, cargando demoPortfolios como fallback...');
+          const tenantConfig = await this.prisma.tenantConfig.findFirst({
+            where: { tenantId: _tenantId }
+          });
+          if (tenantConfig && (tenantConfig.schema as any)?.demoPortfolios) {
+            snapshots = (tenantConfig.schema as any).demoPortfolios;
+          }
+        }
+
+        // Aplicamos los filtros de planCode y branchCode sobre los snapshots obtenidos en vivo
+        if (filters.planCode && filters.planCode !== '*') {
+          const cleanPlanCode = filters.planCode.toLowerCase();
+          snapshots = snapshots.filter((s) => {
+            const matchCode = s.planCode.toLowerCase() === cleanPlanCode;
+            const matchLabel =
+              s.planLabel.toLowerCase().includes(cleanPlanCode) ||
+              cleanPlanCode.includes(s.planCode.toLowerCase());
+            return matchCode || matchLabel;
+          });
+        }
+
+        if (filters.branchCode) {
+          const cleanBranch = filters.branchCode.toLowerCase();
+          snapshots = snapshots.filter(
+            (s) => s.branchCode.toLowerCase() === cleanBranch,
+          );
+        }
+
+        return snapshots;
+      } catch (err) {
+        console.error('Error querying and refreshing policyCache in findMany:', err);
       }
     }
 
@@ -396,8 +463,8 @@ export class MockPolicyAdapter implements IPolicyPort {
       productId,
       productName,
       branchCode,
-      planCode: typedItem.Plan || '',
-      planLabel: typedItem.Descripcion_Plan || typedItem.Plan || '',
+      planCode: (typedItem.cplan || typedItem.Cplan || typedItem.Plan || '').toString().trim(),
+      planLabel: (typedItem.Descripcion_Plan || typedItem.xplan || typedItem.cplan || typedItem.Cplan || typedItem.Plan || '').toString().trim(),
       segmentCode:
         typedItem.Segmento ||
         (branchCode === 'rcv' ? 'particular' : 'individual'),

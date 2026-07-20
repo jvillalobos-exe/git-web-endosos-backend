@@ -11,7 +11,7 @@ async function main() {
   }
 
   const INITIAL_CONFIG = JSON.parse(fs.readFileSync(seedConfigPath, 'utf8'));
-  const tenantId = 'a1b2c3d4-e5f6-4789-abcd-ef1234567890';
+  const tenantId = process.env.TENANT_ID || 'a1b2c3d4-e5f6-4789-abcd-ef1234567890';
   const laMundialConfig = INITIAL_CONFIG.insurers.find((ins) => ins.id === 'la-mundial');
 
   if (!laMundialConfig) {
