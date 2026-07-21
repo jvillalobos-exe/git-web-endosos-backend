@@ -47,8 +47,9 @@ export class MockPolicyAdapter implements IPolicyPort {
       const coreUrl =
         process.env.CORE_API_URL ||
         'https://qaapisys2000.lamundialdeseguros.com';
+      const apiPath = coreUrl.endsWith('/api') ? '/v1/poliza/searchPoliza' : '/api/v1/poliza/searchPoliza';
       const response = await fetch(
-        `${coreUrl}/api/v1/poliza/searchPoliza`,
+        `${coreUrl}${apiPath}`,
         {
           method: 'POST',
           headers: {
@@ -72,8 +73,9 @@ export class MockPolicyAdapter implements IPolicyPort {
 
           // 2. Consulta secundaria al endpoint de recibos del Core para poblar la prima
           try {
+            const receiptApiPath = coreUrl.endsWith('/api') ? '/v1/poliza/search-polizaRecibos' : '/api/v1/poliza/search-polizaRecibos';
             const receiptResponse = await fetch(
-              `${coreUrl}/api/v1/poliza/search-polizaRecibos`,
+              `${coreUrl}${receiptApiPath}`,
               {
                 method: 'POST',
                 headers: {
@@ -165,7 +167,8 @@ export class MockPolicyAdapter implements IPolicyPort {
         const coreUrl =
           process.env.CORE_API_URL ||
           'https://qaapisys2000.lamundialdeseguros.com';
-        const response = await fetch(`${coreUrl}/api/v1/poliza/searchPoliza`, {
+        const apiPath = coreUrl.endsWith('/api') ? '/v1/poliza/searchPoliza' : '/api/v1/poliza/searchPoliza';
+        const response = await fetch(`${coreUrl}${apiPath}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -213,34 +216,59 @@ export class MockPolicyAdapter implements IPolicyPort {
       }
     } else {
       // ─── CONSULTA SIN CEDULA (MÓDULO DE CARTERA/LOTES) ──────────────────────
-      // Leemos de la cache local (índice de pólizas) y consultamos en vivo al Core para cada una
       try {
-        const cached = await this.prisma.policyCache.findMany();
+        const coreUrl =
+          process.env.CORE_API_URL ||
+          'https://qaapisys2000.lamundialdeseguros.com';
+        
+        let cramo: number | undefined;
+        if (filters.branchCode) {
+          const cleanBranch = filters.branchCode.toLowerCase();
+          if (cleanBranch === 'rcv' || cleanBranch === 'auto') {
+            cramo = 18;
+          } else if (cleanBranch === 'funerario') {
+            cramo = 36;
+          } else if (cleanBranch === 'vida') {
+            cramo = 6;
+          }
+        }
+
+        const apiPath = coreUrl.endsWith('/api') ? '/v1/poliza/searchPoliza' : '/api/v1/poliza/searchPoliza';
+        const response = await fetch(`${coreUrl}${apiPath}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cramo: cramo,
+            page: 1,
+            steps: 200, // Límite seguro y paginado de 200 pólizas más recientes
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`External API returned status ${response.status}`);
+        }
+
+        const json = await response.json();
         let snapshots: PolicySnapshot[] = [];
 
-        if (cached.length > 0) {
-          // Consultamos en vivo al Core para cada una de las pólizas indexadas
-          const promises = cached.map(async (c) => {
-            try {
-              // findByPolicyId consulta al Core y actualiza la cache automáticamente
-              const fresh = await this.findByPolicyId(_tenantId, c.policyId);
-              return fresh;
-            } catch (err) {
-              console.error(`Error refreshing policy ${c.policyId} from Core in findMany:`, err);
-              return c.data as unknown as PolicySnapshot; // Fallback al JSON de cache si el Core falla
-            }
-          });
+        if (json && json.status && json.data && json.data.list) {
+          const list = Array.isArray(json.data.list)
+            ? json.data.list
+            : Object.values(json.data.list);
 
-          const results = await Promise.all(promises);
-          snapshots = results.filter((s): s is PolicySnapshot => s !== null);
-        } else {
-          // Fallback a demoPortfolios si la base de datos de cache local está vacía
-          console.log('Cache local vacía, cargando demoPortfolios como fallback...');
-          const tenantConfig = await this.prisma.tenantConfig.findFirst({
-            where: { tenantId: _tenantId }
-          });
-          if (tenantConfig && (tenantConfig.schema as any)?.demoPortfolios) {
-            snapshots = (tenantConfig.schema as any).demoPortfolios;
+          for (const item of list) {
+            const typedItem = item;
+            const uniquePolicyId =
+              typedItem.Nro_Poliza ||
+              typedItem.cnpoliza ||
+              typedItem.Cnpoliza ||
+              typedItem.cpoliza?.toString();
+            if (!uniquePolicyId) continue;
+
+            const snapshot = this.mapToSnapshot(uniquePolicyId, typedItem);
+            snapshots.push(snapshot);
           }
         }
 
@@ -265,7 +293,7 @@ export class MockPolicyAdapter implements IPolicyPort {
 
         return snapshots;
       } catch (err) {
-        console.error('Error querying and refreshing policyCache in findMany:', err);
+        console.error('Error fetching policies directly from Core API in findMany:', err);
       }
     }
 
